@@ -1,0 +1,13 @@
+{
+  "predix-timeseries":{
+    "label":{
+      "aggregations":"Get all available aggregations",
+      "datapoints":"Query datapoints",
+      "query-current":"Query for current value",
+      "tags":"Get all tags"
+    },
+    "error":{
+      "unauthorized":"Unable to authorized with this server"
+    }
+  }
+}

@@ -1,0 +1,124 @@
+<script type="text/javascript">
+    RED.nodes.registerType('timeseries-client',{
+        category: 'config',
+        defaults: {
+            name: { value:""},
+            UAAurl: { value:"",required:true},
+            clientID:{value:"", required:true},
+            clientSecret: { value:"", required:true},
+            predixZoneId: { value:"",required:true}
+        },
+        inputs:0,
+        outputs:0,
+        label: function() {
+            return this.name || this.UAAurl;
+        }
+    });
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('timeseries-ingest',{
+        category: 'function',
+        color: '#a8ddf4',
+        defaults: {
+            name: { value:""},
+            server:{type:"timeseries-client", required:true}
+        },
+        icon: "predix-timeseries.png",
+        align: "right",
+        paletteLabel:"ts ingest",
+        inputs:1,
+        outputs:1,
+        label: function() {
+            return this.name||"timeseries ingest";
+        }
+    });
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('timeseries-query',{
+        category: 'function',
+        color: '#a8ddf4',
+        defaults: {
+            name: { value:""},
+            server:{type:"timeseries-client", required:true},
+            queryType:{value:"",required:true}
+        },
+        icon: "predix-timeseries.png",
+        align: "right",
+        paletteLabel:"ts query",
+        inputs:1,
+        outputs:1,
+        label: function() {
+            return this.name||"timeseries query";
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="timeseries-client">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="icon-tag"></i>Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-UAAurl"><i class="icon-tag"></i>UAA url</label>
+        <input type="text" id="node-config-input-UAAurl" placeholder="UAAurl">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientID"><i class="icon-tag"></i>Client ID</label>
+        <input type="text" id="node-config-input-clientID" placeholder="clientID">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientSecret"><i class="icon-tag"></i>Client secret</label>
+        <input type="text" id="node-config-input-clientSecret" placeholder="clientSecret">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-predixZoneId"><i class="icon-tag"></i>Predix-Zone-Id</label>
+        <input type="text" id="node-config-input-predixZoneId" placeholder="predixZoneId">
+    </div>
+</script>
+
+<script type="text/x-red" data-template-name="timeseries-ingest">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i>Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-bookmark"></i> Timeseries Client</label>
+        <input type="text" id="node-input-server">
+    </div>
+    
+</script>
+
+<script type="text/x-red" data-template-name="timeseries-query">
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i>Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-bookmark"></i> Timeseries Client</label>
+        <input type="text" id="node-input-server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-queryType">Query type</label>
+        <select type="text" id="node-input-queryType" style="width: 70%;">
+            <option value=0 data-i18n="predix-timeseries.label.aggregations"></option>
+            <option value=1 data-i18n="predix-timeseries.label.datapoints"></option>
+            <option value=2 data-i18n="predix-timeseries.label.query-current"></option>
+            <option value=3 data-i18n="predix-timeseries.label.tags"></option>
+        </select>
+    </div>    
+
+</script>
+
+<script type="text/x-red" data-help-name="timeseries-client">
+TBD
+</script>
+
+<script type="text/x-red" data-help-name="timeseries-ingest">
+tbd
+</script>
+
+<script type="text/x-red" data-help-name="timeseries-query">
+tbd
+</script>
