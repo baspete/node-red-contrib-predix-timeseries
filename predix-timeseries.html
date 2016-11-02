@@ -4,15 +4,18 @@
         defaults: {
             name: { value:""},
             UAAurl: { value:"",required:true},
-            clientID:{value:"", required:true},
-            clientSecret: { value:"", required:true},
             predixZoneId: { value:"",required:true}
+        },
+        credentials:{
+            clientID:{type:"text"},
+            clientSecret: { type:"password"}
         },
         inputs:0,
         outputs:0,
         label: function() {
             return this.name || this.UAAurl;
-        }
+        },
+        oneditprepare: function() { }
     });
 </script>
 
@@ -28,7 +31,7 @@
         align: "right",
         paletteLabel:"ts ingest",
         inputs:1,
-        outputs:1,
+        outputs:0,
         label: function() {
             return this.name||"timeseries ingest";
         }
@@ -45,7 +48,7 @@
             queryType:{value:"",required:true}
         },
         icon: "predix-timeseries.png",
-        align: "right",
+        align: "left",
         paletteLabel:"ts query",
         inputs:1,
         outputs:1,
@@ -70,7 +73,7 @@
     </div>
     <div class="form-row">
         <label for="node-config-input-clientSecret"><i class="icon-tag"></i>Client secret</label>
-        <input type="text" id="node-config-input-clientSecret" placeholder="clientSecret">
+        <input type="password" id="node-config-input-clientSecret" placeholder="clientSecret">
     </div>
     <div class="form-row">
         <label for="node-config-input-predixZoneId"><i class="icon-tag"></i>Predix-Zone-Id</label>
