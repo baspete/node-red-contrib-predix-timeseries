@@ -28,7 +28,7 @@ To setup the Timeseries ingest node, first setup the Timeseries client configura
 The current default ws url is wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages, if you have a different ws url, please feel free to contact the author of this node.
 
 If you have entered all correct information and deploy, you should see the node showing "Connected".
-![](readme_images/data_ingest_conencted.PNG?raw=true)
+![](readme_images/data_ingest_conencted.png?raw=true)
 
 Once the node is connected, user is able send data in the incoming message. The fields include:
 
@@ -75,7 +75,7 @@ To setup the Timeseries ingest node, first setup the Timeseries client configura
 The current default API base url is https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/, if you have a different url, please feel free to contact the author of this node.
 
 Once you have all the correct information and deploy the flow, you should see the node showing "Authenticated".
-![](readme_images/data_query_authenticated.PNG?raw=true)
+![](readme_images/data_query_authenticated.png?raw=true)
 
 The data query node has a drop down menu with 4 options. They are referring to four API endpoints of the [Preix timeseries data services](https://www.predix.io/api#!/Asset).
 
