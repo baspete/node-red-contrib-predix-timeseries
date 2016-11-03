@@ -42,29 +42,29 @@ A sample code (taken from Predix toolkit API explorer) for what goes into the fu
 
 
         msg.payload={
-                      "messageId": "1453338376222",
-                      "body": [
-                        {
-                          "name": "Compressor-2015:CompressionRatio",
-                          "datapoints": [
-                            [
-                              1453338376222,
-                              10,
-                              3
-                            ],
-                            [
-                              1453338377222,
-                              10,
-                              1
-                            ]
-                          ],
-                          "attributes": {
-                            "host": "server1",
-                            "customer": "Acme"
-                          }
-                        }
-                      ]
-                    }  
+          "messageId": "1453338376222",
+          "body": [
+            {
+              "name": "Compressor-2015:CompressionRatio",
+              "datapoints": [
+                [
+                  1453338376222,
+                  10,
+                  3
+                ],
+                [
+                  1453338377222,
+                  10,
+                  1
+                ]
+              ],
+              "attributes": {
+                "host": "server1",
+                "customer": "Acme"
+              }
+            }
+          ]
+        }  
         return msg;
 
 
@@ -79,7 +79,7 @@ Once you have all the correct information and deploy the flow, you should see th
 
 The data query node has a drop down menu with 4 options. They are referring to four API endpoints of the [Preix timeseries data services](https://www.predix.io/api#!/Asset).
 
-Here would be the sample code for the query command that users can send with the incoming messages (sample codes are taken from Predix toolkit API explorer). 
+Here would be the sample code for the query command that users can send with the incoming messages in a function node(sample codes are taken from Predix toolkit API explorer). 
 
 1. Get all available aggregations:
     
