@@ -41,31 +41,31 @@ Once the node is connected, user is able send data in the incoming message. The 
 A sample code (taken from Predix toolkit API explorer) for what goes into the function node would be:
 
 
-    msg.payload={
-                  "messageId": "1453338376222",
-                  "body": [
-                    {
-                      "name": "Compressor-2015:CompressionRatio",
-                      "datapoints": [
-                        [
-                          1453338376222,
-                          10,
-                          3
-                        ],
-                        [
-                          1453338377222,
-                          10,
-                          1
-                        ]
-                      ],
-                      "attributes": {
-                        "host": "server1",
-                        "customer": "Acme"
-                      }
-                    }
-                  ]
-                }  
-    return msg;
+        msg.payload={
+                      "messageId": "1453338376222",
+                      "body": [
+                        {
+                          "name": "Compressor-2015:CompressionRatio",
+                          "datapoints": [
+                            [
+                              1453338376222,
+                              10,
+                              3
+                            ],
+                            [
+                              1453338377222,
+                              10,
+                              1
+                            ]
+                          ],
+                          "attributes": {
+                            "host": "server1",
+                            "customer": "Acme"
+                          }
+                        }
+                      ]
+                    }  
+        return msg;
 
 
 ### Timeseries Query node: Query data from timeseries
@@ -83,103 +83,103 @@ Here would be the sample code for the query command that users can send with the
 
 1. Get all available aggregations:
     
-    msg.payload={
-      "tags": [
-        {
-          "name": "Compressor-2015:CompressionRatio",
-          "order": "desc",
-          "aggregations": [
+        msg.payload={
+          "tags": [
             {
-              "type": "avg",
-              "sampling": {
-                "unit": "s",
-                "value": "30"
-              }
+              "name": "Compressor-2015:CompressionRatio",
+              "order": "desc",
+              "aggregations": [
+                {
+                  "type": "avg",
+                  "sampling": {
+                    "unit": "s",
+                    "value": "30"
+                  }
+                }
+              ]
             }
-          ]
-        }
-      ],
-      "start": 1452112200000,
-      "end": 1453458896222
-    };
-    return msg;
+          ],
+          "start": 1452112200000,
+          "end": 1453458896222
+        };
+        return msg;
 
 2. Query datapoints:
   
 * If you would like to group datapoints:
 
-    msg.payload={
-      "start": "1y-ago",
-      "tags": [
-        {
-          "name": "Compressor-2015:CompressionRatio",
-          "order": "desc",
-          "groups": [
+        msg.payload={
+          "start": "1y-ago",
+          "tags": [
             {
-              "name": "quality"
+              "name": "Compressor-2015:CompressionRatio",
+              "order": "desc",
+              "groups": [
+                {
+                  "name": "quality"
+                }
+              ]
             }
           ]
-        }
-      ]
-    };
-    return msg;
+        };
+        return msg;
 
 * If you would like to query limited datapoints:
 
-    msg.payload={
-      "start": "1y-ago",
-      "tags": [
-        {
-          "name": "Compressor-2015:CompressionRatio",
-          "order": "desc",
-          "limit": 2
-        }
-      ]
-    };
-    return msg; 
+        msg.payload={
+          "start": "1y-ago",
+          "tags": [
+            {
+              "name": "Compressor-2015:CompressionRatio",
+              "order": "desc",
+              "limit": 2
+            }
+          ]
+        };
+        return msg; 
 
 * If you would like to query ordered datapoints:
 
-    msg.payload={
-      "start": "1y-ago",
-      "tags": [
-        {
-          "name": "Compressor-2015:CompressionRatio",
-          "order": "desc"
-        }
-      ]
-    };
-    return msg; 
+        msg.payload={
+          "start": "1y-ago",
+          "tags": [
+            {
+              "name": "Compressor-2015:CompressionRatio",
+              "order": "desc"
+            }
+          ]
+        };
+        return msg; 
 
 * If you would like to query time bounded datapoints:
 
-    msg.payload={
-      "cache_time": 0,
-      "tags": [
-        {
-          "name": "Compressor-2015:CompressionRatio",
-          "order": "desc"
-        }
-      ],
-      "start": 1452112200000,
-      "end": 1453458896222
-    };
-    return msg;   
+        msg.payload={
+          "cache_time": 0,
+          "tags": [
+            {
+              "name": "Compressor-2015:CompressionRatio",
+              "order": "desc"
+            }
+          ],
+          "start": 1452112200000,
+          "end": 1453458896222
+        };
+        return msg;   
 
 3. Query for current value:
 
-    msg.payload={
-      "tags": [
-        {
-          "name": "Compressor-2015:CompressionRatio"
-        }
-      ]
-    };
-    return msg;  
+        msg.payload={
+          "tags": [
+            {
+              "name": "Compressor-2015:CompressionRatio"
+            }
+          ]
+        };
+        return msg;  
 
 4. Get all tags:
 
-    msg.payload={
-      //we can just send an empty msg.payload
-    };
-    return msg;  
+        msg.payload={
+          //we can just send an empty msg.payload
+        };
+        return msg;  
