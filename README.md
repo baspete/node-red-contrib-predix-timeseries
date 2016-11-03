@@ -28,7 +28,7 @@ To setup the Timeseries ingest node, first setup the Timeseries client configura
 The current default ws url is wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages, if you have a different ws url, please feel free to contact the author of this node.
 
 If you have entered all correct information and deploy, you should see the node showing "Connected".
-![](readme_images/data_ingest_conencted.PNG?raw=true)
+![](readme_images/data_ingest_conencted.png?raw=true)
 
 Once the node is connected, user is able send data in the incoming message. The fields include:
 
@@ -42,29 +42,29 @@ A sample code (taken from Predix toolkit API explorer) for what goes into the fu
 
 
         msg.payload={
-                      "messageId": "1453338376222",
-                      "body": [
-                        {
-                          "name": "Compressor-2015:CompressionRatio",
-                          "datapoints": [
-                            [
-                              1453338376222,
-                              10,
-                              3
-                            ],
-                            [
-                              1453338377222,
-                              10,
-                              1
-                            ]
-                          ],
-                          "attributes": {
-                            "host": "server1",
-                            "customer": "Acme"
-                          }
-                        }
-                      ]
-                    }  
+          "messageId": "1453338376222",
+          "body": [
+            {
+              "name": "Compressor-2015:CompressionRatio",
+              "datapoints": [
+                [
+                  1453338376222,
+                  10,
+                  3
+                ],
+                [
+                  1453338377222,
+                  10,
+                  1
+                ]
+              ],
+              "attributes": {
+                "host": "server1",
+                "customer": "Acme"
+              }
+            }
+          ]
+        }  
         return msg;
 
 
@@ -75,11 +75,11 @@ To setup the Timeseries ingest node, first setup the Timeseries client configura
 The current default API base url is https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/, if you have a different url, please feel free to contact the author of this node.
 
 Once you have all the correct information and deploy the flow, you should see the node showing "Authenticated".
-![](readme_images/data_query_authenticated.PNG?raw=true)
+![](readme_images/data_query_authenticated.png?raw=true)
 
 The data query node has a drop down menu with 4 options. They are referring to four API endpoints of the [Preix timeseries data services](https://www.predix.io/api#!/Asset).
 
-Here would be the sample code for the query command that users can send with the incoming messages (sample codes are taken from Predix toolkit API explorer). 
+Here would be the sample code for the query command that users can send with the incoming messages in a function node(sample codes are taken from Predix toolkit API explorer). 
 
 1. Get all available aggregations:
     
@@ -106,65 +106,65 @@ Here would be the sample code for the query command that users can send with the
 
 2. Query datapoints:
   
-* If you would like to group datapoints:
+  * If you would like to group datapoints:
 
-        msg.payload={
-          "start": "1y-ago",
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc",
-              "groups": [
-                {
-                  "name": "quality"
-                }
-              ]
-            }
-          ]
-        };
-        return msg;
+          msg.payload={
+            "start": "1y-ago",
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc",
+                "groups": [
+                  {
+                    "name": "quality"
+                  }
+                ]
+              }
+            ]
+          };
+          return msg;
 
-* If you would like to query limited datapoints:
+  * If you would like to query limited datapoints:
 
-        msg.payload={
-          "start": "1y-ago",
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc",
-              "limit": 2
-            }
-          ]
-        };
-        return msg; 
+          msg.payload={
+            "start": "1y-ago",
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc",
+                "limit": 2
+              }
+            ]
+          };
+          return msg; 
 
-* If you would like to query ordered datapoints:
+  * If you would like to query ordered datapoints:
 
-        msg.payload={
-          "start": "1y-ago",
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc"
-            }
-          ]
-        };
-        return msg; 
+          msg.payload={
+            "start": "1y-ago",
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc"
+              }
+            ]
+          };
+          return msg; 
 
-* If you would like to query time bounded datapoints:
+  * If you would like to query time bounded datapoints:
 
-        msg.payload={
-          "cache_time": 0,
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc"
-            }
-          ],
-          "start": 1452112200000,
-          "end": 1453458896222
-        };
-        return msg;   
+          msg.payload={
+            "cache_time": 0,
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc"
+              }
+            ],
+            "start": 1452112200000,
+            "end": 1453458896222
+          };
+          return msg;   
 
 3. Query for current value:
 
