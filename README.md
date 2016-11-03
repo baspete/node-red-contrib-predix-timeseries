@@ -108,63 +108,63 @@ Here would be the sample code for the query command that users can send with the
   
   * If you would like to group datapoints:
 
-        msg.payload={
-          "start": "1y-ago",
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc",
-              "groups": [
-                {
-                  "name": "quality"
-                }
-              ]
-            }
-          ]
-        };
-        return msg;
+          msg.payload={
+            "start": "1y-ago",
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc",
+                "groups": [
+                  {
+                    "name": "quality"
+                  }
+                ]
+              }
+            ]
+          };
+          return msg;
 
   * If you would like to query limited datapoints:
 
-        msg.payload={
-          "start": "1y-ago",
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc",
-              "limit": 2
-            }
-          ]
-        };
-        return msg; 
+          msg.payload={
+            "start": "1y-ago",
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc",
+                "limit": 2
+              }
+            ]
+          };
+          return msg; 
 
   * If you would like to query ordered datapoints:
 
-        msg.payload={
-          "start": "1y-ago",
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc"
-            }
-          ]
-        };
-        return msg; 
+          msg.payload={
+            "start": "1y-ago",
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc"
+              }
+            ]
+          };
+          return msg; 
 
   * If you would like to query time bounded datapoints:
 
-        msg.payload={
-          "cache_time": 0,
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc"
-            }
-          ],
-          "start": 1452112200000,
-          "end": 1453458896222
-        };
-        return msg;   
+          msg.payload={
+            "cache_time": 0,
+            "tags": [
+              {
+                "name": "Compressor-2015:CompressionRatio",
+                "order": "desc"
+              }
+            ],
+            "start": 1452112200000,
+            "end": 1453458896222
+          };
+          return msg;   
 
 3. Query for current value:
 
