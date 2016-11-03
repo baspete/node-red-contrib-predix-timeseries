@@ -115,13 +115,42 @@
 </script>
 
 <script type="text/x-red" data-help-name="timeseries-client">
-TBD
+    <p>This sets up the timeseries client config.</p>
+    <p><ul>
+            <li><b>Name:</b> Enter a name for t his client node</li>
+            <li><b>UAA url:</b> Enter the url for the UAA instance that is associated with the Predix Timeseries instance</li>
+            <li><b>Client ID:</b> Enter the app client ID that is associated with the Timeseries instance</li>
+            <li><b>Client secret:</b> Enter the client secret associated with the app client id</li>
+            <li><b>Predix-Zone-id:</b> Enter the Predix-Zone-idfor the app that is associated with the timeseries. 
+       </ul>
+    </p>
 </script>
 
 <script type="text/x-red" data-help-name="timeseries-ingest">
-tbd
+    <p>This is the data ingest node that allows your to write data into the Predix Timeseries microservices via websocket.</p>
+    <p>The current default websocket endpoint is <code>wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages </code> </p>
+    <p>To use the node, first add a new Time series client node to connect with Timeseries on Predix.</p>
+    <p> Users are expected to write data in the following fields:
+        <ul>
+            <li><code>msg.payload.messageId</code> is usually the timestamp of the message</li>
+            <li><code>msg.payload.body</code> includes three properties, they are:
+                <ul>
+                    <li><code>name:</code> The tag name, e.g. "name": "Compressor-2015:CompressionRatio" </li>
+                    <li><code>datapoints:</code> Array of datapoints. </li>
+                    <li><code>attributes:</code> attributes of message</li>
+                </ul>
+            </li>
+        </ul>
+    </p>
+    <p>Note: please refer to the README file for detail structure of the input message.</p>
+
 </script>
 
 <script type="text/x-red" data-help-name="timeseries-query">
-tbd
+    <p>This is the data query node that allows your to query data from the Predix Timeseries microservices.</p>
+    <p>The current default API endpoint prefix is <code>https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/ </code> </p>
+    <p>To use the node, first add a new Time series client node to connect with Timeseries on Predix.</p>
+    <p> Users are expected to query data in <code>msg.payload</code>.</p>
+    <p>Note: please refer to the README file for detail structure of the input message.</p>
+
 </script>
