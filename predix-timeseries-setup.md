@@ -8,7 +8,7 @@ This involves:
 2. Setting up a UAA instance
 3. SEtting up the time series microservice
 
-Once this is done you can ingest and query data though the API explorer tab in Predix Toolkit. 
+Once this is done you can ingest and query data though the API explorer tab in Predix Toolkit, or even better, Node-RED using the **node-red-contrib-predix-timeseries** nodes.
 
 # Setting up the Placeholder Application
 
