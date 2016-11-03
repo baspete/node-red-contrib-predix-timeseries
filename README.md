@@ -106,7 +106,7 @@ Here would be the sample code for the query command that users can send with the
 
 2. Query datapoints:
   
-* If you would like to group datapoints:
+  * If you would like to group datapoints:
 
         msg.payload={
           "start": "1y-ago",
@@ -124,7 +124,7 @@ Here would be the sample code for the query command that users can send with the
         };
         return msg;
 
-* If you would like to query limited datapoints:
+  * If you would like to query limited datapoints:
 
         msg.payload={
           "start": "1y-ago",
@@ -138,7 +138,7 @@ Here would be the sample code for the query command that users can send with the
         };
         return msg; 
 
-* If you would like to query ordered datapoints:
+  * If you would like to query ordered datapoints:
 
         msg.payload={
           "start": "1y-ago",
@@ -151,7 +151,7 @@ Here would be the sample code for the query command that users can send with the
         };
         return msg; 
 
-* If you would like to query time bounded datapoints:
+  * If you would like to query time bounded datapoints:
 
         msg.payload={
           "cache_time": 0,
