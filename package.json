@@ -8,7 +8,7 @@
   "dependencies": {
     "ws": "0.8.1",
     "request": "2.76.0"
-    },
+  },
   "keywords": [
     "node-red",
     "predix",

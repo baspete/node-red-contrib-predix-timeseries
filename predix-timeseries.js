@@ -25,7 +25,6 @@ module.exports = function(RED){
       },
       method:'POST',
       body:'client_id='+node.clientID+'&grant_type=client_credentials'
-
     };
 
     //access token expires in 12 hours
@@ -35,8 +34,12 @@ module.exports = function(RED){
         node.error(response.statusCode+": "+response.statusMessage);
         node.emit('unauthenticated','');
       } else if(response){
-        node.accessToken = JSON.parse(response.body).access_token;
-        node.emit('authenticated','');
+        try {
+          node.accessToken = JSON.parse(response.body).access_token;
+          node.emit('authenticated','');
+        } catch (err) {
+          node.emit('access token error');
+        }
       } else {
         node.error("Invalid request");
         node.emit('unauthenticated','');
@@ -46,9 +49,10 @@ module.exports = function(RED){
     request(options,callback);
 
     this.on('close', function(){
+      /* nothing for now */
     });
-
   }
+
   RED.nodes.registerType("timeseries-client", timeseriesClientNode, {
     credentials:{
       clientID:{type:"text"},
@@ -57,13 +61,13 @@ module.exports = function(RED){
   });
 
   function timeseriesIngestNode(config){
-    var ws = require("ws");    
+    var ws = require("ws");
     const wsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
     const originPath = "http://localhost/";
 
     RED.nodes.createNode(this,config);
     var node = this;
-    var websocketConnection = false;
+    var isWsConnected = false;
 
     this.server = RED.nodes.getNode(config.server);
 
@@ -75,7 +79,7 @@ module.exports = function(RED){
         startconn();
       };
 
-      this.server.on('authenticated', function() { 
+      this.server.on('authenticated', function() {
         // console.log("authenticated");
         node.unauthorized = false;
         node.status({fill:"green",shape:"dot",text:"Authenticated"});
@@ -99,7 +103,7 @@ module.exports = function(RED){
     function startconn(){
       // console.log("start connection");
       var opts = {};
-      if(node.predixZoneId && node.accessToken){
+      if(node.predixZoneId && node.accessToken) {
         opts={
           headers:{
             'predix-zone-id':node.predixZoneId,
@@ -107,6 +111,13 @@ module.exports = function(RED){
             'origin':originPath
           }
         };
+      } else {
+        if (!node.accessToken) {
+          node.status({fill:"red",shape:"ring",text:"missing access token"});
+        } else if (!node.predixZoneId) {
+          node.status({fill:"red",shape:"ring",text:"missing predix zone id"});
+        }
+        return;
       }
       var socket = new ws(wsURL, opts);
       node.connection = socket;
@@ -116,22 +127,19 @@ module.exports = function(RED){
     function handleConnection(/*socket*/socket){
       socket.on('open', function(){
         // console.log("Websocket is opened");
-        websocketConnection = true;
+        isWsConnected = true;
         node.emit('opened','');
         node.status({fill:"green",shape:"dot",text:"Connected"});
       });
 
       socket.on('close',function(code, data){
         // console.log("websocket is closed");
-        // console.log(code);
-        websocketConnection = false;
+        isWsConnected = false;
         node.status({fill:"red",shape:"ring",text:"Closed"});
         node.emit('closed');
         //reconnect
         if(!node.unauthorized){
-          if (node.tout) { 
-            clearTimeout(node.tout); 
-          }
+          clearTimeout(node.tout);
           node.emit('reconnecting');
           node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
           node.tout = setTimeout(function(){ startconn(); }, 3000);
@@ -139,14 +147,12 @@ module.exports = function(RED){
       })
 
       socket.on('error', function(err){
-        websocketConnection = false;
+        isWsConnected = false;
         node.warn("Socket error");
         node.emit('error', err.message);
         //reconnect
         if(!node.unauthorized){
-          if (node.tout) { 
-            clearTimeout(node.tout); 
-          }
+          clearTimeout(node.tout);
           node.emit('reconnecting');
           node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
           node.tout = setTimeout(function(){ startconn(); }, 3000);
@@ -154,8 +160,13 @@ module.exports = function(RED){
       })
 
       socket.on('message',function(data){
-        node.log(data); 
-        var statusCode = JSON.parse(data).statusCode;
+        node.log(data);
+        var statusCode;
+        try {
+          statusCode = JSON.parse(data).statusCode;
+        } catch (err) {
+          node.error("Invalid status code");
+        }
         if(statusCode !== 202 ){
           node.error(statusCode + ": " + "Ingest error");
         };
@@ -172,27 +183,24 @@ module.exports = function(RED){
           payload = msg.payload;
         }
       }
-
-      if(websocketConnection){
-
+      if(isWsConnected === true){
         if (payload) {
- 
-            try{node.connection.send(payload);}
-            catch(err){
+            try {
+              node.connection.send(payload);
+            } catch(err){
               node.error(err);
             }
         }
       } else {
         node.error("Websocket not connected");
       }
-    });      
-
+    });
   }
+
   RED.nodes.registerType("timeseries-ingest", timeseriesIngestNode);
 
-
   function timeseriesQueryNode(config){
-    var request = require('request'); 
+    var request = require('request');
     const queryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/"
 
     RED.nodes.createNode(this,config);
@@ -245,6 +253,13 @@ module.exports = function(RED){
 
     this.on('input', function(msg){
       if (msg.hasOwnProperty("payload")){
+        var body;
+        try {
+          body = JSON.stringify(msg.payload)
+        } catch (err) {
+          node.error("Failed to parse msg.payload: " + err);
+          return;
+        }
         var options ={
           url: node.apiEndpoint,
           headers:{
@@ -252,17 +267,18 @@ module.exports = function(RED){
             'authorization':'Bearer '+node.accessToken
           },
           method:requestMethod,
-          body:JSON.stringify(msg.payload)
+          body:body
         };
 
         function callback(error, response, body){
           if(error){
             node.error(error);
-          }
-          if(response && response.statusCode!==200){
-            node.error(response.statusCode+": "+response.body);
-          } else if(response){
-            node.send({payload:response.body});
+          } else if(response) {
+            if (response.statusCode!==200){
+              node.error(response.statusCode+": "+response.body);
+            } else {
+              node.send({payload:response.body});
+            }
           }
         };
         request(options,callback);

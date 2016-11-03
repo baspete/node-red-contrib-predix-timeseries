@@ -21,7 +21,7 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('timeseries-ingest',{
-        category: 'function',
+        category: 'storage',
         color: '#a8ddf4',
         defaults: {
             name: { value:""},
@@ -29,7 +29,7 @@
         },
         icon: "predix-timeseries.png",
         align: "right",
-        paletteLabel:"ts ingest",
+        paletteLabel:"predix ts",
         inputs:1,
         outputs:0,
         label: function() {
@@ -40,7 +40,7 @@
 
 <script type="text/javascript">
     RED.nodes.registerType('timeseries-query',{
-        category: 'function',
+        category: 'storage',
         color: '#a8ddf4',
         defaults: {
             name: { value:""},
@@ -49,7 +49,7 @@
         },
         icon: "predix-timeseries.png",
         align: "left",
-        paletteLabel:"ts query",
+        paletteLabel:"predix ts",
         inputs:1,
         outputs:1,
         label: function() {
@@ -60,23 +60,23 @@
 
 <script type="text/x-red" data-template-name="timeseries-client">
     <div class="form-row">
-        <label for="node-config-input-name"><i class="icon-tag"></i>Name</label>
+        <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-config-input-name" placeholder="Name">
     </div>
     <div class="form-row">
-        <label for="node-config-input-UAAurl"><i class="icon-tag"></i>UAA url</label>
+        <label for="node-config-input-UAAurl"><i class="icon-globe"></i> UAA url</label>
         <input type="text" id="node-config-input-UAAurl" placeholder="UAAurl">
     </div>
     <div class="form-row">
-        <label for="node-config-input-clientID"><i class="icon-tag"></i>Client ID</label>
+        <label for="node-config-input-clientID"><i class="icon-user"></i> Client ID</label>
         <input type="text" id="node-config-input-clientID" placeholder="clientID">
     </div>
     <div class="form-row">
-        <label for="node-config-input-clientSecret"><i class="icon-tag"></i>Client secret</label>
+        <label for="node-config-input-clientSecret"><i class="icon-lock"></i> Client secret</label>
         <input type="password" id="node-config-input-clientSecret" placeholder="clientSecret">
     </div>
     <div class="form-row">
-        <label for="node-config-input-predixZoneId"><i class="icon-tag"></i>Predix-Zone-Id</label>
+        <label for="node-config-input-predixZoneId"><i class="icon-flag"></i> Predix-Zone-Id</label>
         <input type="text" id="node-config-input-predixZoneId" placeholder="predixZoneId">
     </div>
 </script>
