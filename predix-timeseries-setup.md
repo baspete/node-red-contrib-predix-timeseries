@@ -1,6 +1,14 @@
-The simplest way to set up time series on predix with just an Hello World front end app
+The simplest way to set up a stand alone time series microservice on predix is to use a placeholder "Hello World: front end app.
 
--------------The placeholder app Hello World---------
+This involves:
+
+1. Creating an application
+2. Setting up a UAA instance
+3. SEtting up the time series microservice
+
+Once this is done you can ingest and query data though the API explorer tab in Predix Toolkit. 
+
+# Setting up the Placeholder Application
 
 1. Use the Cloud Foundry CLI to log into Cloud Foundry
         cf login -a <API-ENDPOINT>
@@ -32,7 +40,7 @@ The simplest way to set up time series on predix with just an Hello World front 
     you can also enter this in the browser to check the webpage
         https://Predix-HelloWorld-WebApp-<YourAppName>.run.aws-usw02-pr.ice.predix.io
 
------------------UAA instance------------------
+# Set Up a UAA Instance
 
 6. Now, create an UAA instance, the easy way would be enter this in the command terminal:
         cf create-service predix-uaa Tiered <your-name>-secure-uaa-instance -c '{"adminClientSecret":"theadminpassword"}'
@@ -49,7 +57,7 @@ The simplest way to set up time series on predix with just an Hello World front 
     -You can verify by clicking "Login as user", enter credentials and submit. You should see a response with token.
     -Then you can click "check token", in which you should see the decoded token
 
------------------Timeseries instance-------------
+# Set up a Time Series Microservice Instance
 
 9. In the Predix Developer Network console page, go to catalog -> timeseries -> at the bottom of the page click "subscribe"
 
@@ -82,7 +90,7 @@ The simplest way to set up time series on predix with just an Hello World front 
         timeseries.zones.<your-timeseries-zone-id>.query 
     -validate the token by clicking "check token", you should see the newly added authorities in the token, with the correct timeseries zone id.
     
------------------Finishing--------------------
+# Wrapping up
 
 14. Now that the timeseries instance is set up and ready to use. You can ingest and query data though the API explorer tab in Predix Toolkit. 
    
