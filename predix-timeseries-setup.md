@@ -88,15 +88,15 @@ Now let's start the setup.
             - <your-name>-secure-uaa-instance
             - <your-name>-timeseries-instance
         env:
-            clientId:<client id  that you created in step 8>
+            clientId:<client id  that you created in UAA instance>
             base64ClientCredential:<open the terminal, enter "echo –n app_client_id:secret | base64", copy the converted value to here>
 
     now save the yml file, and do a "cf push" again. Once it's done, verify with "cf env <your-app-name>". You will see the config of this app, and we will need these values for the next step.     
     
 13. Now, go back to Predix Toolkit site, we need to add timeseries in the authorties.
-    * login as admin like in step 8
+    * login as admin like when you set up UAA instance
     * click Get Client on the left panel, and you should see the info of the client
-    * click "update client", where you will enter these three new authorities for the placeholder app. Note that you will find your timeseries zone id from the command "cf env <your-app-name>" that you did in step 12.
+    * click "update client", where you will enter these three new authorities for the placeholder app. Note that you will find your timeseries zone id from the command "cf env <your-app-name>" that you did in previous step.
 
             timeseries.zones.<your-timeseries-zone-id>.user
             timeseries.zones.<your-timeseries-zone-id>.ingest
