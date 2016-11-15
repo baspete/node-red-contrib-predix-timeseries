@@ -1,3 +1,4 @@
+
 # How to set up a Predix Time Series Microservice for access by Node-RED
 
 This guide will show you how to set up a timeseries service on Predix platform binded with just a placeholder front-end Webapp. This guide includes 3 major steps, including:
@@ -50,11 +51,7 @@ Now let's start the setup.
 
         https://Predix-HelloWorld-WebApp-<YourAppName>.run.aws-usw02-pr.ice.predix.io
 
-<<<<<<< HEAD
-# Set Up a UAA Instance
-=======
 ## 2. Set up a UAA instance:
->>>>>>> develop
 
 6. Now, create an UAA instance, the easy way would be enter this in the command terminal:
 
@@ -72,11 +69,7 @@ Now let's start the setup.
     * You can verify by clicking "Login as user", enter credentials and submit. You should see a response with token.
     * Then you can click "check token", in which you should see the decoded token
 
-<<<<<<< HEAD
-# Set up a Time Series Microservice Instance
-=======
 ## 3. Set up a Timeseries instance:
->>>>>>> develop
 
 9. In the Predix Developer Network console page, go to catalog -> timeseries -> at the bottom of the page click "subscribe"
 
@@ -149,11 +142,7 @@ Now let's start the setup.
       And you should be able to see the user privileges in the scope field of the user token.
 
     
-<<<<<<< HEAD
-# Wrapping up
-=======
 ## Finishing
->>>>>>> develop
 
 Now that the timeseries instance is set up and ready to use. You can ingest and query data though the API explorer tab in Predix Toolkit. 
    
