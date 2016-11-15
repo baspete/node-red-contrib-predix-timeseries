@@ -40,7 +40,7 @@ module.exports = function(RED){
       body:'username='+node.credentials.userID+'&password='+node.credentials.userSecret+'&grant_type=password'
     };
 
-    function callback(error, response, body){
+    request(options, function(error, response, body){
       if(response && response.statusCode!==200){
         node.error(response.statusCode+": "+response.statusMessage);
         node.emit('unauthenticated','');
@@ -59,9 +59,7 @@ module.exports = function(RED){
         node.error("Invalid request");
         node.emit('unauthenticated','');
       }
-    };
-
-    request(options,callback);
+    });
 
     this.on('close', function(){
       /* nothing for now */
@@ -81,41 +79,51 @@ module.exports = function(RED){
     return ((new Date).getTime() >= this.tokenExpiryTime );
   };
 
-  timeseriesClientNode.prototype.renewToken = function(/*Node*/handler){
+  timeseriesClientNode.prototype.renewToken = function(/*Node*/handler, callback){
+   
     var options ={
-      url: this.UAAurl,
+      url: handler.UAAurl,
       headers:{
         'Content-Type':'application/x-www-form-urlencoded',
         'Pragma':'no-cache',
         'Cache-Control':'no-cache',
-        'authorization':'Basic '+this.base64ClientCredential
+        'authorization':'Basic '+handler.base64ClientCredential
       },
       method:'POST',
-      body: 'refresh_token='+this.refreshToken+'&grant_type=refresh_token'
+      body: 'refresh_token='+handler.refreshToken+'&grant_type=refresh_token'
     };
 
-    function callback(error, response, body){
+    request(options,function(error, response, body){
       if(response && response.statusCode!==200){
-        this.error(response.statusCode+": "+response.statusMessage);
-        this.emit('unauthenticated','');
+        handler.error(response.statusCode+": "+response.statusMessage);
+        handler.emit('unauthenticated','');
+        if(callback != null){
+          callback(new Error('unauthenticated'), false);
+        };
       } else if(response){
         try {
-          this.accessToken = JSON.parse(response.body).access_token;
-          this.refreshToken = JSON.parse(response.body).refresh_token;
-          this.emit('authenticated','');
-          this.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS;
-          // this.log("Renew access token");
+          handler.accessToken = JSON.parse(response.body).access_token;
+          handler.refreshToken = JSON.parse(response.body).refresh_token;
+          handler.emit('authenticated','');
+          handler.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS;
+          if(callback != null){
+            callback(null, true);
+          };
         } catch (err) {
-          this.emit('accessTokenError');
+          handler.emit('accessTokenError');
+          if(callback != null){
+            callback(new Error('accessTokenError'), false);
+          };
         }
       } else {
-        this.error("Invalid request");
-        this.emit('unauthenticated','');
+        handler.error("Invalid request");
+        handler.emit('unauthenticated','');
+        if(callback != null){
+          callback(new Error('invalid'), false);
+        }
       }
-    };
-    request(options,callback);
+    });
   };
-
 
   function timeseriesIngestNode(config){
     RED.nodes.createNode(this,config);
@@ -314,12 +322,9 @@ module.exports = function(RED){
         break;
       default:
         node.apiEndpoint = queryUrlPrefix;
-    }
-    this.on('input', function(msg){
+    };
 
-      if(node.server.checkTokenExpire(node.server)){
-        node.server.renewToken(node.server);
-      } 
+    function requestCall(msg){
       if (msg.hasOwnProperty("payload")){
         var body;
         try {
@@ -338,7 +343,7 @@ module.exports = function(RED){
           body:body
         };
 
-        function callback(error, response, body){
+        request(options, function(error, response, body){
           if(error){
             node.error(error);
           } else if(response) {
@@ -347,10 +352,23 @@ module.exports = function(RED){
             } else {
               node.send({payload:response.body});
             }
-          }
-        };
-        request(options,callback);
+          }          
+        });
       } 
+    };
+
+    this.on('input', function(msg){
+      if (node.server.checkTokenExpire(node.server)){ 
+        node.server.renewToken(node.server, function(err, bool){
+          if(bool === true){
+            requestCall(msg);
+          } else {
+            node.error(err);
+          }
+        });
+      } else {
+        requestCall(msg);
+      };
     });
   }
   RED.nodes.registerType("timeseries-query", timeseriesQueryNode);
