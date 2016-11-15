@@ -1,9 +1,16 @@
+var request = require('request'); 
+var ws = require("ws");
+
+const SECONDS_CONVERT_TO_MS = 1000;
+const queryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
+const wsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
+const originPath = "http://localhost/";  
 
 module.exports = function(RED){
   "use strict";
 
   function timeseriesClientNode(n){
-    var request = require('request'); 
+    
     RED.nodes.createNode(this,n);
     var node = this;
 
@@ -11,10 +18,16 @@ module.exports = function(RED){
     node.clientID = node.credentials.clientID;
     node.clientSecret = node.credentials.clientSecret;
     node.predixZoneId = n.predixZoneId;
+
+    //Checks if hitting the correct UAA api, if not, modify the end points to avoid 302 error
+    var endOfUaaUrl = node.UAAurl.substr(node.UAAurl.length-12);
+    if(endOfUaaUrl !== '/oauth/token'){
+        node.UAAurl += '/oauth/token';
+    };
         
     var buffer = new Buffer(node.clientID+":"+node.clientSecret);
     node.base64ClientCredential = buffer.toString('base64');
-    
+
     var options ={
       url: node.UAAurl,
       headers:{
@@ -24,29 +37,29 @@ module.exports = function(RED){
         'authorization':'Basic '+node.base64ClientCredential
       },
       method:'POST',
-      body:'client_id='+node.clientID+'&grant_type=client_credentials'
+      body:'username='+node.credentials.userID+'&password='+node.credentials.userSecret+'&grant_type=password'
     };
 
-    //access token expires in 12 hours
-
-    function callback(error, response, body){
+    request(options, function(error, response, body){
       if(response && response.statusCode!==200){
         node.error(response.statusCode+": "+response.statusMessage);
         node.emit('unauthenticated','');
       } else if(response){
         try {
           node.accessToken = JSON.parse(response.body).access_token;
+          node.refreshToken = JSON.parse(response.body).refresh_token;
+
           node.emit('authenticated','');
+          node.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS; 
+          // node.log("Token expires at "+node.tokenExpiryTime+", the current time is "+(new Date).getTime());
         } catch (err) {
-          node.emit('access token error');
+          node.emit('accessTokenError');
         }
       } else {
         node.error("Invalid request");
         node.emit('unauthenticated','');
       }
-    };
-
-    request(options,callback);
+    });
 
     this.on('close', function(){
       /* nothing for now */
@@ -56,19 +69,66 @@ module.exports = function(RED){
   RED.nodes.registerType("timeseries-client", timeseriesClientNode, {
     credentials:{
       clientID:{type:"text"},
-      clientSecret: { type:"password"}
+      clientSecret: { type:"password"},
+      userID:{type:"text"},
+      userSecret:{type:"password"}      
     }
   });
 
-  function timeseriesIngestNode(config){
-    var ws = require("ws");
-    const wsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
-    const originPath = "http://localhost/";
+  timeseriesClientNode.prototype.checkTokenExpire = function(/*Node*/handler) {
+    return ((new Date).getTime() >= this.tokenExpiryTime );
+  };
 
+  timeseriesClientNode.prototype.renewToken = function(/*Node*/handler, callback){
+   
+    var options ={
+      url: handler.UAAurl,
+      headers:{
+        'Content-Type':'application/x-www-form-urlencoded',
+        'Pragma':'no-cache',
+        'Cache-Control':'no-cache',
+        'authorization':'Basic '+handler.base64ClientCredential
+      },
+      method:'POST',
+      body: 'refresh_token='+handler.refreshToken+'&grant_type=refresh_token'
+    };
+
+    request(options,function(error, response, body){
+      if(response && response.statusCode!==200){
+        handler.error(response.statusCode+": "+response.statusMessage);
+        handler.emit('unauthenticated','');
+        if(callback != null){
+          callback(new Error('unauthenticated'), false);
+        };
+      } else if(response){
+        try {
+          handler.accessToken = JSON.parse(response.body).access_token;
+          handler.refreshToken = JSON.parse(response.body).refresh_token;
+          handler.emit('authenticated','');
+          handler.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS;
+          if(callback != null){
+            callback(null, true);
+          };
+        } catch (err) {
+          handler.emit('accessTokenError');
+          if(callback != null){
+            callback(new Error('accessTokenError'), false);
+          };
+        }
+      } else {
+        handler.error("Invalid request");
+        handler.emit('unauthenticated','');
+        if(callback != null){
+          callback(new Error('invalid'), false);
+        }
+      }
+    });
+  };
+
+  function timeseriesIngestNode(config){
     RED.nodes.createNode(this,config);
     var node = this;
     var isWsConnected = false;
-
     this.server = RED.nodes.getNode(config.server);
 
     if(this.server){
@@ -95,6 +155,13 @@ module.exports = function(RED){
         node.predixZoneId = "";
         node.accessToken = "";        
       });
+
+      this.server.on('accessTokenError',function() { 
+        node.unauthorized = true;
+        node.status({fill:"red",shape:"ring",text:"Access Error"});
+        node.predixZoneId = "";
+        node.accessToken = "";        
+      });      
     } else {
       node.status({fill:"yellow", shape:"dot",text:"Missing config"});
     }
@@ -144,20 +211,25 @@ module.exports = function(RED){
           node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
           node.tout = setTimeout(function(){ startconn(); }, 3000);
         }; 
-      })
+      });
 
       socket.on('error', function(err){
         isWsConnected = false;
-        node.warn("Socket error");
-        node.emit('error', err.message);
-        //reconnect
-        if(!node.unauthorized){
-          clearTimeout(node.tout);
-          node.emit('reconnecting');
-          node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
-          node.tout = setTimeout(function(){ startconn(); }, 3000);
-        }        
-      })
+        // node.warn("Socket error");
+        node.error(err);
+
+        node.status({fill:"red",shape:"ring",text:"Error"});
+     
+        if(node.server.checkTokenExpire(node.server)){
+          node.server.renewToken(node.server);
+          if(!node.unauthorized){
+            clearTimeout(node.tout);
+            node.emit('reconnecting');
+            node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
+            node.tout = setTimeout(function(){ startconn(); }, 3000);
+          }  
+        }
+      });
 
       socket.on('message',function(data){
         node.log(data);
@@ -196,13 +268,9 @@ module.exports = function(RED){
       }
     });
   }
-
   RED.nodes.registerType("timeseries-ingest", timeseriesIngestNode);
 
   function timeseriesQueryNode(config){
-    var request = require('request');
-    const queryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/"
-
     RED.nodes.createNode(this,config);
     var node = this;
     var requestMethod ='';
@@ -213,7 +281,6 @@ module.exports = function(RED){
     if(this.server){
       node.accessToken = this.server.accessToken;
       node.predixZoneId = node.server.predixZoneId;
-
       this.server.on('authenticated', function() { 
         node.unauthorized = false;
         node.status({fill:"green",shape:"dot",text:"Authenticated"});
@@ -226,6 +293,12 @@ module.exports = function(RED){
         node.predixZoneId = "";
         node.accessToken = "";        
       });
+      this.server.on('accessTokenError',function() { 
+        node.unauthorized = true;
+        node.status({fill:"red",shape:"ring",text:"Access Error"});
+        node.predixZoneId = "";
+        node.accessToken = "";        
+      });  
     } else {
       node.status({fill:"yellow", shape:"dot",text:"Missing server config"});
     }
@@ -249,9 +322,9 @@ module.exports = function(RED){
         break;
       default:
         node.apiEndpoint = queryUrlPrefix;
-    }
+    };
 
-    this.on('input', function(msg){
+    function requestCall(msg){
       if (msg.hasOwnProperty("payload")){
         var body;
         try {
@@ -270,7 +343,7 @@ module.exports = function(RED){
           body:body
         };
 
-        function callback(error, response, body){
+        request(options, function(error, response, body){
           if(error){
             node.error(error);
           } else if(response) {
@@ -279,10 +352,23 @@ module.exports = function(RED){
             } else {
               node.send({payload:response.body});
             }
-          }
-        };
-        request(options,callback);
+          }          
+        });
       } 
+    };
+
+    this.on('input', function(msg){
+      if (node.server.checkTokenExpire(node.server)){ 
+        node.server.renewToken(node.server, function(err, bool){
+          if(bool === true){
+            requestCall(msg);
+          } else {
+            node.error(err);
+          }
+        });
+      } else {
+        requestCall(msg);
+      };
     });
   }
   RED.nodes.registerType("timeseries-query", timeseriesQueryNode);

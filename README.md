@@ -84,25 +84,9 @@ Here would be the sample code for the query command that users can send with the
 1. Get all available aggregations:
     
         msg.payload={
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "order": "desc",
-              "aggregations": [
-                {
-                  "type": "avg",
-                  "sampling": {
-                    "unit": "s",
-                    "value": "30"
-                  }
-                }
-              ]
-            }
-          ],
-          "start": 1452112200000,
-          "end": 1453458896222
+          //we can just send an empty msg.payload
         };
-        return msg;
+        return msg;  
 
 2. Query datapoints:
   

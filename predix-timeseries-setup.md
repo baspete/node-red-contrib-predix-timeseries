@@ -111,6 +111,43 @@ Now let's start the setup.
             timeseries.zones.<your-timeseries-zone-id>.query 
 
     * validate the token by clicking "check token", you should see the newly added authorities in the token, with the correct timeseries zone id.
+
+14. You will also need to grant access privilege to the user that you will be using to access the Timeseries instance. You can do this in the UAA instance configuration by adding the corresponding groups to the users that you will be using. The other more advance way would be adding these groups in the command terminal. Note that you will need to be very careful as you might accidently wipe the admin policies of your UAA instance.
+
+    * You will need to have uaac installed on your workstation. If you have not yet installed that, just enter 
+
+            gem install cf-uaac
+
+    * You will need to target to the UAA instance by:
+
+            uaac target <uaac-instance-url>
+
+    * Login as admin by:
+
+            uaac token client get admin
+                Client secret:  ******
+
+    * Create new groups that we will be using by:
+
+            uaac group add timeseries.zones.<your-timeseries-zone-id>.user
+            uaac group add timeseries.zones.<your-timeseries-zone-id>.ingest
+            uaac group add timeseries.zones.<your-timeseries-zone-id>.query
+
+    * Assuming you have already had your user set up in the previous step, we will add the corresponding previlege(s) to the user. Note that you can grant only ingest or only query access to the user. We are adding all the previleges here for showcase:
+
+            uaac member add timeseries.zones.<your-timeseries-zone-id>.user <username>
+            uaac member add timeseries.zones.<your-timeseries-zone-id>.ingest <username>
+            uaac member add timeseries.zones.<your-timeseries-zone-id>.query <username>
+
+    * If things go well, we can now verify the user previleges by decoding the user token:
+
+            uaac token owner get <clientID> <username>
+                Client secret:  ******    
+                Password:  ********       #user password
+            uaac token decode
+
+      And you should be able to see the user privileges in the scope field of the user token.
+
     
 <<<<<<< HEAD
 # Wrapping up

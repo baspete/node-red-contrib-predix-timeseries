@@ -8,7 +8,9 @@
         },
         credentials:{
             clientID:{type:"text"},
-            clientSecret: { type:"password"}
+            clientSecret: { type:"password"},
+            userID:{type:"text"},
+            userSecret:{type:"password"}
         },
         inputs:0,
         outputs:0,
@@ -76,6 +78,14 @@
         <input type="password" id="node-config-input-clientSecret" placeholder="clientSecret">
     </div>
     <div class="form-row">
+        <label for="node-config-input-userID"><i class="icon-user"></i> User ID</label>
+        <input type="text" id="node-config-input-userID" placeholder="userID">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-userSecret"><i class="icon-lock"></i> User secret</label>
+        <input type="password" id="node-config-input-userSecret" placeholder="userSecret">
+    </div>
+    <div class="form-row">
         <label for="node-config-input-predixZoneId"><i class="icon-flag"></i> Predix-Zone-Id</label>
         <input type="text" id="node-config-input-predixZoneId" placeholder="predixZoneId">
     </div>
@@ -121,6 +131,8 @@
             <li><b>UAA url:</b> Enter the url for the UAA instance that is associated with the Predix Timeseries instance</li>
             <li><b>Client ID:</b> Enter the app client ID that is associated with the Timeseries instance</li>
             <li><b>Client secret:</b> Enter the client secret associated with the app client id</li>
+            <li><b>User ID:</b> Enter the user ID that has access to the Timeseries instance</li>
+            <li><b>User password:</b> Enter the password of the user that will be accessing the Timeseries instance</li>
             <li><b>Predix-Zone-id:</b> Enter the Predix-Zone-idfor the app that is associated with the timeseries. 
        </ul>
     </p>
