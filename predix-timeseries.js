@@ -19,12 +19,9 @@ module.exports = function(RED){
     node.clientSecret = node.credentials.clientSecret;
     node.predixZoneId = n.predixZoneId;
 
-    //Checks if hitting the correct UAA api, if not, modify the end points to avoid 302 error
-    var endOfUaaUrl = node.UAAurl.substr(node.UAAurl.length-12);
-    if(endOfUaaUrl !== '/oauth/token'){
-        node.UAAurl += '/oauth/token';
-    };
-        
+    //add the oauth endpoint to the UAA host url
+    node.UAAurl += '/oauth/token';
+            
     var buffer = new Buffer(node.clientID+":"+node.clientSecret);
     node.base64ClientCredential = buffer.toString('base64');
 
@@ -75,7 +72,7 @@ module.exports = function(RED){
     }
   });
 
-  timeseriesClientNode.prototype.checkTokenExpire = function(/*Node*/handler) {
+  timeseriesClientNode.prototype.checkTokenExpire = function() {
     return ((new Date).getTime() >= this.tokenExpiryTime );
   };
 
@@ -220,7 +217,7 @@ module.exports = function(RED){
 
         node.status({fill:"red",shape:"ring",text:"Error"});
      
-        if(node.server.checkTokenExpire(node.server)){
+        if(node.server.checkTokenExpire()){
           node.server.renewToken(node.server);
           if(!node.unauthorized){
             clearTimeout(node.tout);
@@ -304,19 +301,19 @@ module.exports = function(RED){
     }
 
     switch(node.queryType){
-      case "0":
+      case "aggregations":
         node.apiEndpoint = queryUrlPrefix + "aggregations";
         requestMethod = 'GET';
         break;
-      case "1":
+      case "datapoints":
         node.apiEndpoint = queryUrlPrefix + "datapoints";
         requestMethod = 'POST';
         break;
-      case "2":
+      case "currentDatapoints":
         node.apiEndpoint = queryUrlPrefix + "datapoints/latest";
         requestMethod = 'POST';
         break;
-      case "3":
+      case "tags":
         node.apiEndpoint = queryUrlPrefix + "tags";
         requestMethod = 'GET';
         break;
@@ -358,7 +355,7 @@ module.exports = function(RED){
     };
 
     this.on('input', function(msg){
-      if (node.server.checkTokenExpire(node.server)){ 
+      if (node.server.checkTokenExpire()){ 
         node.server.renewToken(node.server, function(err, bool){
           if(bool === true){
             requestCall(msg);
