@@ -1,11 +1,11 @@
 # node-red-contrib-predix-timeseries
 
 
-These are [Node-RED](http://nodered.org) nodes that interface with the Timeseries microservices on [General Electric's Predix platform](https://www.ge.com/digital/predix) specifically for the functions of data ingestion and data query. The nodes simplify the process of data ingestion and data query without requiring users to develop an actual application on the Predix platform. 
+These are [Node-RED](http://nodered.org) nodes that interface with the Timeseries microservices on [General Electric's Predix platform](https://www.ge.com/digital/predix) specifically for the functions of data ingestion and data query. The nodes simplify the process of data ingestion and data query without requiring users to develop an actual application on the Predix platform. For more information on Predix, please refer to [Predix resource](https://www.predix.io/resources).
 
-For more information on Predix, please refer to [Predix resource](https://www.predix.io/resources).
+For more information of these nodes, please refer to the tutorial on [http://developers.sensetecnic.com](http://developers.sensetecnic.com/article/tutorial-using-fred-to-interface-timeseries-on-predix/)
 
-For a quicker way to setup the Timeseries microservice on Predix, please refer to [predix-timeseries-setup-guide](https://github.com/SenseTecnic/node-red-contrib-predix-timeseries/blob/master/predix-timeseries-setup.md). 
+For a quick way to setup the Timeseries microservice on Predix, please refer to [predix-timeseries-setup-guide](https://github.com/SenseTecnic/node-red-contrib-predix-timeseries/blob/master/predix-timeseries-setup.md). 
 
 ## Pre-requesites
 
@@ -23,7 +23,7 @@ Usually this is `~/.node-red` .
 
 ### Timeseries Ingest node: Write data to timeseries
 
-To setup the Timeseries ingest node, first setup the Timeseries client configuration by entering the information of your timeseries instance, such as the UAA url, Client ID, Client secret and the Predix-Zone-Id. If you are not sure where to obtain these values, please refer to the predix-timeseries-setup-guide. For a better understanding of the timeseries data structure, please refer to the [predix timeseries document](https://www.predix.io/docs/?r=816498#F0PrUNk2).
+To setup the Timeseries ingest node, first setup the Timeseries client configuration by entering the information of your timeseries instance, such as the UAA url, Client ID, Client secret and the Predix-Zone-Id. If you are not sure where to obtain these values, please refer to the [predix-timeseries-setup-guide](https://github.com/SenseTecnic/node-red-contrib-predix-timeseries/blob/master/predix-timeseries-setup.md). For a better understanding of the timeseries data structure, please refer to the [predix timeseries document](https://www.predix.io/docs/?r=816498#F0PrUNk2).
 
 The current default ws url is wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages, if you have a different ws url, please feel free to contact the author of this node.
 
@@ -38,39 +38,12 @@ Once the node is connected, user is able send data in the incoming message. The 
     * datapoints: the datapoints in array form, which include timestamp, measurement and quality
     * attributes(optional): attributes are key/value pairs used to store data associated with a tag
 
-A sample code (taken from Predix toolkit API explorer) for what goes into the function node would be:
-
-
-        msg.payload={
-          "messageId": "1453338376222",
-          "body": [
-            {
-              "name": "Compressor-2015:CompressionRatio",
-              "datapoints": [
-                [
-                  1453338376222,
-                  10,
-                  3
-                ],
-                [
-                  1453338377222,
-                  10,
-                  1
-                ]
-              ],
-              "attributes": {
-                "host": "server1",
-                "customer": "Acme"
-              }
-            }
-          ]
-        }  
-        return msg;
+For detail usage of the node, please refer to the tutorial on [http://developers.sensetecnic.com](http://developers.sensetecnic.com/article/tutorial-using-fred-to-interface-timeseries-on-predix/)
 
 
 ### Timeseries Query node: Query data from timeseries
 
-To setup the Timeseries ingest node, first setup the Timeseries client configuration by entering the information of your timeseries instance, such as the UAA url, Client ID, Client secret and the Predix-Zone-Id. If you are not sure where to obtain these values, please refer to the predix-timeseries-setup-guide. For a better understanding of the timeseries data structure, please refer to the [predix timeseries document](https://www.predix.io/docs/?r=816498#F0PrUNk2).
+To setup the Timeseries ingest node, first setup the Timeseries client configuration by entering the information of your timeseries instance, such as the UAA url, Client ID, Client secret and the Predix-Zone-Id. If you are not sure where to obtain these values, please refer to the [predix-timeseries-setup-guide](https://github.com/SenseTecnic/node-red-contrib-predix-timeseries/blob/master/predix-timeseries-setup.md). For a better understanding of the timeseries data structure, please refer to the [predix timeseries document](https://www.predix.io/docs/?r=816498#F0PrUNk2).
 
 The current default API base url is https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/, if you have a different url, please feel free to contact the author of this node.
 
@@ -78,92 +51,11 @@ Once you have all the correct information and deploy the flow, you should see th
 ![](readme_images/data_query_authenticated.png?raw=true)
 
 The data query node has a drop down menu with 4 options. They are referring to four API endpoints of the [Preix timeseries data services](https://www.predix.io/api#!/Asset).
+1. Get all available aggregations
+2. Query datapoints
+3. Query for current value
+4. Get all tags
 
-Here would be the sample code for the query command that users can send with the incoming messages in a function node(sample codes are taken from Predix toolkit API explorer). 
+For sample codes on the query command and node setup, please refer to our tutorial on [http://developers.sensetecnic.com](http://developers.sensetecnic.com/article/tutorial-using-fred-to-interface-timeseries-on-predix/)
 
-1. Get all available aggregations:
-    
-        msg.payload={
-          //we can just send an empty msg.payload
-        };
-        return msg;  
 
-2. Query datapoints:
-  
-  * If you would like to group datapoints:
-
-          msg.payload={
-            "start": "1y-ago",
-            "tags": [
-              {
-                "name": "Compressor-2015:CompressionRatio",
-                "order": "desc",
-                "groups": [
-                  {
-                    "name": "quality"
-                  }
-                ]
-              }
-            ]
-          };
-          return msg;
-
-  * If you would like to query limited datapoints:
-
-          msg.payload={
-            "start": "1y-ago",
-            "tags": [
-              {
-                "name": "Compressor-2015:CompressionRatio",
-                "order": "desc",
-                "limit": 2
-              }
-            ]
-          };
-          return msg; 
-
-  * If you would like to query ordered datapoints:
-
-          msg.payload={
-            "start": "1y-ago",
-            "tags": [
-              {
-                "name": "Compressor-2015:CompressionRatio",
-                "order": "desc"
-              }
-            ]
-          };
-          return msg; 
-
-  * If you would like to query time bounded datapoints:
-
-          msg.payload={
-            "cache_time": 0,
-            "tags": [
-              {
-                "name": "Compressor-2015:CompressionRatio",
-                "order": "desc"
-              }
-            ],
-            "start": 1452112200000,
-            "end": 1453458896222
-          };
-          return msg;   
-
-3. Query for current value:
-
-        msg.payload={
-          "tags": [
-            {
-              "name": "Compressor-2015:CompressionRatio"
-            }
-          ]
-        };
-        return msg;  
-
-4. Get all tags:
-
-        msg.payload={
-          //we can just send an empty msg.payload
-        };
-        return msg;  
