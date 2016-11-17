@@ -51,6 +51,7 @@ Once you have all the correct information and deploy the flow, you should see th
 ![](readme_images/data_query_authenticated.png?raw=true)
 
 The data query node has a drop down menu with 4 options. They are referring to four API endpoints of the [Preix timeseries data services](https://www.predix.io/api#!/Asset).
+    
     * Get all available aggregations
     * Query datapoints
     * Query for current value
