@@ -52,10 +52,11 @@ Once you have all the correct information and deploy the flow, you should see th
 
 The data query node has a drop down menu with 4 options. They are referring to four API endpoints of the [Preix timeseries data services](https://www.predix.io/api#!/Asset).
     
-    * Get all available aggregations
-    * Query datapoints
-    * Query for current value
-    * Get all tags
+   * Get all available aggregations
+   * Query datapoints
+   * Query for current value
+   * Get all tags
+
 
 For sample codes on the query command and node setup, please refer to our tutorial on [http://developers.sensetecnic.com](http://developers.sensetecnic.com/article/tutorial-using-fred-to-interface-timeseries-on-predix/)
 
