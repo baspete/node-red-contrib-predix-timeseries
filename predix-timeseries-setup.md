@@ -55,7 +55,7 @@ Now let's start the setup.
 
 6. Now, create an UAA instance, the easy way would be enter this in the command terminal:
 
-        cf create-service predix-uaa Tiered <your-name>-secure-uaa-instance -c '{"adminClientSecret":"theadminpassword"}'
+        cf create-service predix-uaa Free <your-name>-secure-uaa-instance -c '{"adminClientSecret":"<theadminpassword>"}'
 
 7. Then, login to the Predix Developer Network console, go to <your-space> -> <service-instances> -> find the uaa that you just created, click on it.
     * You should see a "configure service instance" button on the right hand side, click on it
