@@ -81,7 +81,7 @@ Now let's start the setup.
 
 11. Your would need to bind the timeseries service with the placeholder app, go to the command terminal and enter:
 
-        cf bind-service <your-name>-predix-nodejs-starter <your-name>-timeseries-instance
+        cf bind-service <your-application-name> <your-name>-timeseries-instance
 
 12. Now, edit manifest.yml file just like we did for the front-end app add in the following fields:
 
