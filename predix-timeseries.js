@@ -1,9 +1,29 @@
+
+/**
+ * Copyright 2013, 2017 IBM Corp.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Modifications copyright (C) 2017 Sense Tecnic Systems, Inc.
+ * 
+ **/
+
 var request = require('request'); 
 var ws = require("ws");
 
 const SECONDS_CONVERT_TO_MS = 1000;
-const queryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
-const wsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
+const defaultQueryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
+const defaultWsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
 const originPath = "http://localhost/";  
 
 module.exports = function(RED){
@@ -15,6 +35,8 @@ module.exports = function(RED){
     var node = this;
 
     node.UAAurl = n.UAAurl;
+    node.queryUrlPrefix = (n.queryUrlPrefix === '') ? defaultQueryUrlPrefix : n.queryUrlPrefix;
+    node.wsUrl = (n.wsUrl === '') ? defaultWsURL : n.wsUrl;
     node.clientID = node.credentials.clientID;
     node.clientSecret = node.credentials.clientSecret;
     node.predixZoneId = n.predixZoneId;
