@@ -22,8 +22,8 @@ var request = require('request');
 var ws = require("ws");
 
 const SECONDS_CONVERT_TO_MS = 1000;
-const queryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
-const wsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
+const defaultQueryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
+const defaultWsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
 const originPath = "http://localhost/";  
 
 module.exports = function(RED){
@@ -35,6 +35,8 @@ module.exports = function(RED){
     var node = this;
 
     node.UAAurl = n.UAAurl;
+    node.queryUrlPrefix = (n.queryUrlPrefix === '') ? defaultQueryUrlPrefix : n.queryUrlPrefix;
+    node.wsUrl = (n.wsUrl === '') ? defaultWsURL : n.wsUrl;
     node.clientID = node.credentials.clientID;
     node.clientSecret = node.credentials.clientSecret;
     node.predixZoneId = n.predixZoneId;
