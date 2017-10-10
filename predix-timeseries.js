@@ -70,7 +70,6 @@ module.exports = function(RED){
 
           node.emit('authenticated','');
           node.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS; 
-          // node.log("Token expires at "+node.tokenExpiryTime+", the current time is "+(new Date).getTime());
         } catch (err) {
           node.emit('accessTokenError');
         }
@@ -159,7 +158,7 @@ module.exports = function(RED){
       };
 
       this.server.on('authenticated', function() {
-        // console.log("authenticated");
+        node.log("[Predix Timeseries]: authenticated");
         node.unauthorized = false;
         node.status({fill:"green",shape:"dot",text:"Authenticated"});
         node.predixZoneId = node.server.predixZoneId;
@@ -168,7 +167,7 @@ module.exports = function(RED){
       });
 
       this.server.on('unauthenticated',function() { 
-        // console.log("unauthenticated");
+        node.log("[Predix Timeseries]: unauthenticated");
         node.unauthorized = true;
         node.status({fill:"red",shape:"ring",text:"Unauthenticated"});
         node.predixZoneId = "";
@@ -176,6 +175,7 @@ module.exports = function(RED){
       });
 
       this.server.on('accessTokenError',function() { 
+        node.error("[Predix Timeseries]: access token error");
         node.unauthorized = true;
         node.status({fill:"red",shape:"ring",text:"Access Error"});
         node.predixZoneId = "";
@@ -187,7 +187,7 @@ module.exports = function(RED){
 
     //ws connection
     function startconn(){
-      // console.log("start connection");
+      node.log("[Predix Timeseries]: start connection");
       var opts = {};
       if(node.predixZoneId && node.accessToken) {
         opts={
@@ -212,36 +212,36 @@ module.exports = function(RED){
 
     function handleConnection(/*socket*/socket){
       socket.on('open', function(){
-        // console.log("Websocket is opened");
+        node.log("[Predix Timeseries]: websocket is connected");
         isWsConnected = true;
         node.emit('opened','');
         node.status({fill:"green",shape:"dot",text:"Connected"});
       });
 
       socket.on('close',function(code, data){
-        // console.log("websocket is closed");
+        node.log("[Predix Timeseries]: websocket is closed");
         isWsConnected = false;
         node.status({fill:"red",shape:"ring",text:"Closed"});
         node.emit('closed');
+        
         //reconnect
-        if(!node.unauthorized){
+        if(node.accessToken != ""){
           clearTimeout(node.tout);
           node.emit('reconnecting');
           node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
           node.tout = setTimeout(function(){ startconn(); }, 3000);
-        }; 
+        };
       });
 
       socket.on('error', function(err){
         isWsConnected = false;
-        // node.warn("Socket error");
         node.error(err);
 
         node.status({fill:"red",shape:"ring",text:"Error"});
      
         if(node.server.checkTokenExpire()){
           node.server.renewToken(node.server);
-          if(!node.unauthorized){
+          if(node.accessToken != ""){
             clearTimeout(node.tout);
             node.emit('reconnecting');
             node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
@@ -265,7 +265,6 @@ module.exports = function(RED){
     }
 
     this.on("input", function(msg){
-      // console.log("injected");
       var payload;
       if (msg.hasOwnProperty("payload")) {
         if (!Buffer.isBuffer(msg.payload)) { // if it's not a buffer make sure it's a string.
@@ -283,7 +282,7 @@ module.exports = function(RED){
             }
         }
       } else {
-        node.error("Websocket not connected");
+        node.error("[Predix Timeseries]: Websocket not connected");
       }
     });
   }
@@ -324,23 +323,23 @@ module.exports = function(RED){
 
     switch(node.queryType){
       case "aggregations":
-        node.apiEndpoint = queryUrlPrefix + "aggregations";
+        node.apiEndpoint = node.server.queryUrlPrefix + "aggregations";
         requestMethod = 'GET';
         break;
       case "datapoints":
-        node.apiEndpoint = queryUrlPrefix + "datapoints";
+        node.apiEndpoint = node.server.queryUrlPrefix + "datapoints";
         requestMethod = 'POST';
         break;
       case "currentDatapoints":
-        node.apiEndpoint = queryUrlPrefix + "datapoints/latest";
+        node.apiEndpoint = node.server.queryUrlPrefix + "datapoints/latest";
         requestMethod = 'POST';
         break;
       case "tags":
-        node.apiEndpoint = queryUrlPrefix + "tags";
+        node.apiEndpoint = node.server.queryUrlPrefix + "tags";
         requestMethod = 'GET';
         break;
       default:
-        node.apiEndpoint = queryUrlPrefix;
+        node.apiEndpoint = node.server.queryUrlPrefix;
     };
 
     function requestCall(msg){
