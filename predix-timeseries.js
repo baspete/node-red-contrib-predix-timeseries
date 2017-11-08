@@ -15,22 +15,24 @@
  * limitations under the License.
  *
  * Modifications copyright (C) 2017 Sense Tecnic Systems, Inc.
- * 
+ *
  **/
 
-var request = require('request'); 
+var request = require('request');
 var ws = require("ws");
+const uaa_util = require('predix-uaa-client');
+
 
 const SECONDS_CONVERT_TO_MS = 1000;
 const defaultQueryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
 const defaultWsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
-const originPath = "http://localhost/";  
+const originPath = "http://localhost/";
 
 module.exports = function(RED){
   "use strict";
 
   function timeseriesClientNode(n){
-    
+
     RED.nodes.createNode(this,n);
     var node = this;
 
@@ -43,41 +45,41 @@ module.exports = function(RED){
 
     //add the oauth endpoint to the UAA host url
     node.UAAurl += '/oauth/token';
-            
-    var buffer = new Buffer(node.clientID+":"+node.clientSecret);
-    node.base64ClientCredential = buffer.toString('base64');
 
-    var options ={
-      url: node.UAAurl,
-      headers:{
-        'Content-Type':'application/x-www-form-urlencoded',
-        'Pragma':'no-cache',
-        'Cache-Control':'no-cache',
-        'authorization':'Basic '+node.base64ClientCredential
-      },
-      method:'POST',
-      body:'username='+node.credentials.userID+'&password='+node.credentials.userSecret+'&grant_type=password'
-    };
+    // var buffer = new Buffer(node.clientID+":"+node.clientSecret);
+    // node.base64ClientCredential = buffer.toString('base64');
 
-    request(options, function(error, response, body){
-      if(response && response.statusCode!==200){
-        node.error(response.statusCode+": "+response.statusMessage);
-        node.emit('unauthenticated','');
-      } else if(response){
-        try {
-          node.accessToken = JSON.parse(response.body).access_token;
-          node.refreshToken = JSON.parse(response.body).refresh_token;
+    // var options ={
+    //   url: node.UAAurl,
+    //   headers:{
+    //     'Content-Type':'application/x-www-form-urlencoded',
+    //     'Pragma':'no-cache',
+    //     'Cache-Control':'no-cache',
+    //     'authorization':'Basic '+node.base64ClientCredential
+    //   },
+    //   method:'POST',
+    //   body:'username='+node.credentials.userID+'&password='+node.credentials.userSecret+'&grant_type=password'
+    // };
 
-          node.emit('authenticated','');
-          node.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS; 
-        } catch (err) {
-          node.emit('accessTokenError');
-        }
-      } else {
-        node.error("Invalid request");
-        node.emit('unauthenticated','');
-      }
-    });
+    // request(options, function(error, response, body){
+    //   if(response && response.statusCode!==200){
+    //     node.error(response.statusCode+": "+response.statusMessage);
+    //     node.emit('unauthenticated','');
+    //   } else if(response){
+    //     try {
+    //       node.accessToken = JSON.parse(response.body).access_token;
+    //       node.refreshToken = JSON.parse(response.body).refresh_token;
+
+    //       node.emit('authenticated','');
+    //       node.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS;
+    //     } catch (err) {
+    //       node.emit('accessTokenError');
+    //     }
+    //   } else {
+    //     node.error("Invalid request");
+    //     node.emit('unauthenticated','');
+    //   }
+    // });
 
     this.on('close', function(){
       /* nothing for now */
@@ -87,61 +89,10 @@ module.exports = function(RED){
   RED.nodes.registerType("timeseries-client", timeseriesClientNode, {
     credentials:{
       clientID:{type:"text"},
-      clientSecret: { type:"password"},
-      userID:{type:"text"},
-      userSecret:{type:"password"}      
+      clientSecret: { type:"text"}
     }
   });
 
-  timeseriesClientNode.prototype.checkTokenExpire = function() {
-    return ((new Date).getTime() >= this.tokenExpiryTime );
-  };
-
-  timeseriesClientNode.prototype.renewToken = function(/*Node*/handler, callback){
-   
-    var options ={
-      url: handler.UAAurl,
-      headers:{
-        'Content-Type':'application/x-www-form-urlencoded',
-        'Pragma':'no-cache',
-        'Cache-Control':'no-cache',
-        'authorization':'Basic '+handler.base64ClientCredential
-      },
-      method:'POST',
-      body: 'refresh_token='+handler.refreshToken+'&grant_type=refresh_token'
-    };
-
-    request(options,function(error, response, body){
-      if(response && response.statusCode!==200){
-        handler.error(response.statusCode+": "+response.statusMessage);
-        handler.emit('unauthenticated','');
-        if(callback != null){
-          callback(new Error('unauthenticated'), false);
-        };
-      } else if(response){
-        try {
-          handler.accessToken = JSON.parse(response.body).access_token;
-          handler.refreshToken = JSON.parse(response.body).refresh_token;
-          handler.emit('authenticated','');
-          handler.tokenExpiryTime = (new Date).getTime() + JSON.parse(response.body).expires_in*SECONDS_CONVERT_TO_MS;
-          if(callback != null){
-            callback(null, true);
-          };
-        } catch (err) {
-          handler.emit('accessTokenError');
-          if(callback != null){
-            callback(new Error('accessTokenError'), false);
-          };
-        }
-      } else {
-        handler.error("Invalid request");
-        handler.emit('unauthenticated','');
-        if(callback != null){
-          callback(new Error('invalid'), false);
-        }
-      }
-    });
-  };
 
   function timeseriesIngestNode(config){
     RED.nodes.createNode(this,config);
@@ -166,21 +117,21 @@ module.exports = function(RED){
         startconn();
       });
 
-      this.server.on('unauthenticated',function() { 
+      this.server.on('unauthenticated',function() {
         node.log("[Predix Timeseries]: unauthenticated");
         node.unauthorized = true;
         node.status({fill:"red",shape:"ring",text:"Unauthenticated"});
         node.predixZoneId = "";
-        node.accessToken = "";        
+        node.accessToken = "";
       });
 
-      this.server.on('accessTokenError',function() { 
+      this.server.on('accessTokenError',function() {
         node.error("[Predix Timeseries]: access token error");
         node.unauthorized = true;
         node.status({fill:"red",shape:"ring",text:"Access Error"});
         node.predixZoneId = "";
-        node.accessToken = "";        
-      });      
+        node.accessToken = "";
+      });
     } else {
       node.status({fill:"yellow", shape:"dot",text:"Missing config"});
     }
@@ -223,7 +174,7 @@ module.exports = function(RED){
         isWsConnected = false;
         node.status({fill:"red",shape:"ring",text:"Closed"});
         node.emit('closed');
-        
+
         //reconnect
         if(node.accessToken != ""){
           clearTimeout(node.tout);
@@ -238,7 +189,7 @@ module.exports = function(RED){
         node.error(err);
 
         node.status({fill:"red",shape:"ring",text:"Error"});
-     
+
         if(node.server.checkTokenExpire()){
           node.server.renewToken(node.server);
           if(node.accessToken != ""){
@@ -246,7 +197,7 @@ module.exports = function(RED){
             node.emit('reconnecting');
             node.status({fill:"yellow",shape:"ring",text:"Reconnecting"});
             node.tout = setTimeout(function(){ startconn(); }, 3000);
-          }  
+          }
         }
       });
 
@@ -297,26 +248,25 @@ module.exports = function(RED){
     this.server = RED.nodes.getNode(config.server);
 
     if(this.server){
-      node.accessToken = this.server.accessToken;
       node.predixZoneId = node.server.predixZoneId;
-      this.server.on('authenticated', function() { 
+      this.server.on('authenticated', function() {
         node.unauthorized = false;
         node.status({fill:"green",shape:"dot",text:"Authenticated"});
         node.predixZoneId = node.server.predixZoneId;
         node.accessToken = node.server.accessToken;
       });
-      this.server.on('unauthenticated',function() { 
+      this.server.on('unauthenticated',function() {
         node.unauthorized = true;
         node.status({fill:"red",shape:"ring",text:"Unauthenticated"});
         node.predixZoneId = "";
-        node.accessToken = "";        
+        node.accessToken = "";
       });
-      this.server.on('accessTokenError',function() { 
+      this.server.on('accessTokenError',function() {
         node.unauthorized = true;
         node.status({fill:"red",shape:"ring",text:"Access Error"});
         node.predixZoneId = "";
-        node.accessToken = "";        
-      });  
+        node.accessToken = "";
+      });
     } else {
       node.status({fill:"yellow", shape:"dot",text:"Missing server config"});
     }
@@ -351,42 +301,41 @@ module.exports = function(RED){
           node.error("Failed to parse msg.payload: " + err);
           return;
         }
-        var options ={
-          url: node.apiEndpoint,
-          headers:{
-            'predix-zone-id':node.predixZoneId,
-            'authorization':'Bearer '+node.accessToken
-          },
-          method:requestMethod,
-          body:body
-        };
+        // Call with client credentials (UAAUrl, ClientID, ClientSecret),
+        // will fetch a client token using these credentials.
+        // In this case the client needs authorized_grant_types: client_credentials
+        uaa_util.getToken(node.server.UAAurl, node.server.clientID, node.server.clientSecret).then((token) => {
+            // Use token.access_token as a Bearer token Authroization header
+            // in calls to secured services.
 
-        request(options, function(error, response, body){
-          if(error){
-            node.error(error);
-          } else if(response) {
-            if (response.statusCode!==200){
-              node.error(response.statusCode+": "+response.body);
-            } else {
-              node.send({payload:response.body});
+          request({
+              url: node.apiEndpoint,
+              headers:{
+                'predix-zone-id':node.predixZoneId,
+                'authorization':'Bearer '+token.access_token
+              },
+              method:requestMethod,
+              body:body
+            }, function(error, response, body){
+            if(error){
+              node.error(error);
+            } else if(response) {
+              if (response.statusCode!==200){
+                node.error(response.statusCode+": "+response.body);
+              } else {
+                node.send({payload:response.body});
+              }
             }
-          }          
+          });
+
+        }).catch((err) => {
+          node.error(err);
         });
-      } 
+      }
     };
 
     this.on('input', function(msg){
-      if (node.server.checkTokenExpire()){ 
-        node.server.renewToken(node.server, function(err, bool){
-          if(bool === true){
-            requestCall(msg);
-          } else {
-            node.error(err);
-          }
-        });
-      } else {
-        requestCall(msg);
-      };
+      requestCall(msg);
     });
   }
   RED.nodes.registerType("timeseries-query", timeseriesQueryNode);
