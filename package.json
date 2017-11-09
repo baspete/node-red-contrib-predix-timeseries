@@ -3,12 +3,13 @@
   "version": "0.0.6",
   "description": "A set of Node-RED nodes for GE Predix Timeseries",
   "author": {
-    "name": "Michael Qiu"
+    "name": "Pete Butler"
   },
   "dependencies": {
     "predix-uaa-client": "^1.3.1",
     "request": "2.76.0",
-    "ws": "0.8.1"
+    "tunnel": "0.0.5",
+    "websocket": "^1.0.25"
   },
   "keywords": [
     "node-red",
@@ -18,7 +19,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SenseTecnic/node-red-contrib-predix-timeseries.git"
+    "url": "git+https://github.com/baspete/node-red-contrib-predix-timeseries.git"
   },
   "node-red": {
     "nodes": {
@@ -27,8 +28,8 @@
   },
   "maintainers": [
     {
-      "name": "Michael Qiu",
-      "email": "mqiu@sensetecnic.com"
+      "name": "Pete Butler",
+      "email": "pete.butler@ge.com"
     }
   ]
 }
