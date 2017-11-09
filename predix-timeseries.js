@@ -234,22 +234,26 @@ module.exports = function(RED){
           node.status({fill:"red",shape:"ring",text:"Websocket Error"});
         });
 
-
+        // Handle responses to sending data.
+        // These should look something like { type: 'utf8', utf8Data: '{"statusCode":202,"messageId":"1"}' }
         connection.on('message', data => {
-          node.log(data);
-          console.log('message received', data);
           var statusCode;
           try {
-            statusCode = JSON.parse(data).statusCode;
+            statusCode = JSON.parse(data.utf8Data).statusCode;
           } catch (err) {
-            node.error("Invalid status code", statusCode);
+            node.error("[Predix Timeseries]: Invalid ingest status code: " + statusCode);
           }
-          if(statusCode !== 202 ){
-            node.error(statusCode + ": " + "Ingest error");
+          if(statusCode < 200 || statusCode >= 300){
+            node.error('[Predix Timeseries] :' + statusCode + ": " + "ingest error");
+          } else {
+            // Everything worked, blinkenlights!
+            node.status({fill:"green",shape:"circle",text:"Data Sent"});
+            // TODO: go back to filled circle
           };
         });
 
-        // When data is received on the input to this node
+
+        // Send data when input to node received
         node.on("input", function(msg){
           var payload;
           if (msg.hasOwnProperty("payload")) {
@@ -261,8 +265,8 @@ module.exports = function(RED){
           }
           if (payload) {
             try {
-              node.log('sending payload', payload);
-              connection.send(payload);
+              connection.sendUTF(payload);
+              node.log("[Predix Timeseries]: Sent " + JSON.stringify(payload));
             } catch(err){
               node.error(err);
             }

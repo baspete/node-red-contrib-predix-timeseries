@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-predix-timeseries",
-  "version": "0.0.6",
+  "version": "0.0.1",
   "description": "A set of Node-RED nodes for GE Predix Timeseries",
   "author": {
     "name": "Pete Butler"
