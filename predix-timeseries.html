@@ -29,7 +29,8 @@
     color: '#a8ddf4',
     defaults: {
       name: { value:""},
-      server:{type:"timeseries-client", required:true}
+      server:{type:"timeseries-client", required:true},
+      socketTimeout:{ value: "10", required:true}
     },
     icon: "predix-timeseries.png",
     align: "right",
@@ -101,6 +102,14 @@
   <div class="form-row">
     <label for="node-input-server"><i class="fa fa-bookmark"></i> Timeseries Client</label>
     <input type="text" id="node-input-server">
+  </div>
+  <div class="form-row">
+    <label for="node-input-socketTimeout"><i class="fa fa-clock-o"></i> Socket Timeout</label>
+    <select type="text" id="node-input-socketTimeout" style="width: 70%;">
+      <option value="10" data-i18n="predix-timeseries.label.10seconds"></option>
+      <option value="60" data-i18n="predix-timeseries.label.1minute"></option>
+      <option value="300" data-i18n="predix-timeseries.label.5minutes"></option>
+    </select>
   </div>
 </script>
 

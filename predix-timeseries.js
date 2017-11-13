@@ -72,7 +72,6 @@ module.exports = function(RED){
     var node = this;
     var requestMethod ='';
     node.queryType = config.queryType;
-
     node.server = RED.nodes.getNode(config.server);
 
     // Indicator
@@ -81,25 +80,25 @@ module.exports = function(RED){
         node.status({fill:'green',shape:'dot',text:'Authenticated'});
       });
       node.on('unauthenticated', () => {
-        node.status({fill:'red',shape:'ring',text:'Unauthenticated'});
+        node.status({fill:'red',shape:'dot',text:'Unauthenticated'});
       });
       node.on('badPayload', (payload) => {
         node.error('Bad Payload: ' + payload);
-        node.status({fill:'red',shape:'ring',text:'Bad Payload'});
+        node.status({fill:'red',shape:'dot',text:'Bad Payload'});
       });
       node.on('requestError', (error) => {
         node.error('Request Error: ' + error);
-        node.status({fill:'red',shape:'ring',text:'Request Error'});
+        node.status({fill:'red',shape:'dot',text:'Request Error'});
       });
       node.on('requestSuccess', (response) => {
         node.log('Request Success: ' + response.statusCode);
         // Blinkenlights
-        node.status({fill:'green',shape:'ring',text:'Data Retrieved'});
-        setTimeout(() => { node.status({fill:'green',shape:'dot',text:'Authenticated'}) }, 200);
+        node.status({fill:'green',shape:'ring',text:'Authenticated'});
+        setTimeout(() => { node.status({fill:'green',shape:'dot',text:'Authenticated'}) }, 100);
       });
       node.on('responseError', (response) => {
         node.error('Response Error: ' + response.statusCode + ': ' + response.body);
-        node.status({fill:'red',shape:'ring',text:'Response Error'});
+        node.status({fill:'red',shape:'dot',text:'Response Error'});
       });
     } else {
       node.status({fill:'yellow', shape:'dot',text:'Missing server config'});
@@ -184,8 +183,8 @@ module.exports = function(RED){
 
   function timeseriesIngestNode(config){
     RED.nodes.createNode(this,config);
-    var node = this;
-    var isWsConnected = false;
+    let node = this;
+    node.socketTimeout = config.socketTimeout;
     const client = new WebSocketClient();
 
     node.server = RED.nodes.getNode(config.server);
@@ -198,40 +197,75 @@ module.exports = function(RED){
       });
       node.on('unauthenticated', () =>  {
         node.log('unauthenticated');
-        node.status({fill:'red',shape:'ring',text:'Unauthenticated'});
+        node.status({fill:'red',shape:'dot',text:'Unauthenticated'});
       });
       node.on('accessTokenError', () =>  {
         node.error('access token error');
-        node.status({fill:'red',shape:'ring',text:'Access Error'});
+        node.status({fill:'red',shape:'dot',text:'Access Error'});
       });
       node.on('connected', () =>  {
         node.log('Websocket Connected');
         node.status({fill:'green',shape:'dot',text:'Connected'});
       });
-      node.on('websocketError', () =>  {
-        node.error('Websocket Connected');
-        node.status({fill:'red',shape:'ring',text:'Websocket Error'});
+      node.on('disconnected', (description) =>  {
+        node.log('Websocket Disconnected: ' + description);
+        node.status({fill:'green',shape:'dot',text:'Authenticated'});
+      });
+      node.on('websocketError', (error) =>  {
+        node.error('Websocket Error: ' + error);
+        node.status({fill:'red',shape:'dot',text:'Websocket Error'});
       });
       node.on('invalidStatusCode', () =>  {
         node.error('Invalid Ingest Status Code');
-        node.status({fill:'red',shape:'ring',text:'Ingest Error'});
+        node.status({fill:'red',shape:'dot',text:'Ingest Error'});
       });
       node.on('ingestError', (statusCode) =>  {
-        node.status({fill:'red',shape:'ring',text:'Ingest Error'});
+        node.status({fill:'red',shape:'dot',text:'Ingest Error'});
         node.error('Ingest Error: ' + statusCode);
       });
       node.on('ingestSuccess', (statusCode) => {
         node.log('Ingest Success: ' + statusCode);
         // Blinkenlights
-        node.status({fill:'green',shape:'ring',text:'Data Sent'});
-        setTimeout(() => { node.status({fill:'green',shape:'dot',text:'Connected'}) }, 200);
+        node.status({fill:'green',shape:'ring',text:"Connected"});
+        setTimeout(() => { node.status({fill:'green',shape:'dot',text:"Connected"}) }, 100);
       });
     } else {
       node.status({fill:'yellow', shape:'dot',text:'Missing config'});
     }
 
+    client.on('connect', (connection) => {
+      node.connection = connection;
+      node.emit('connected', '');
 
-    // Get a token
+      // Handle connection errors
+      node.connection.on('error', (error) => {
+        node.emit('websocketError', error);
+      });
+
+      // Handle data responses.
+      // These should look something like { type: 'utf8', utf8Data: '{'statusCode':202,'messageId':'1'}' }
+      node.connection.on('message', (data) => {
+        let statusCode;
+        try {
+          statusCode = JSON.parse(data.utf8Data).statusCode;
+        } catch (err) {
+          node.emit('invalidStatusCode', '');
+        }
+        if(statusCode < 200 || statusCode >= 300){
+          node.emit('ingestError', statusCode);
+        } else {
+          node.emit('ingestSuccess', statusCode);
+        };
+      });
+
+      node.connection.on('close', (reasonCode, description) => {
+        console.log('closed connection');
+        node.emit('disconnected', description);
+      });
+
+    });
+
+    // Get a token immediately
     uaa_util.getToken(node.server.UAAurl, node.server.clientID, node.server.clientSecret).then((token) => {
       node.emit('authenticated','');
 
@@ -255,56 +289,47 @@ module.exports = function(RED){
         'Origin':originPath
       };
 
+      function ensureConnection(node, client){
+        return new Promise((resolve, reject) => {
+          if(!node.connection) {
+            client.connect(node.server.wsUrl, null, originPath, headers, requestOptions);
+            client.on('connect', (connection) => {
+              resolve();
+            });
+          } else {
+            resolve();
+          }
+        });
+      };
+
       // Handle data input
       node.on('input', function(msg){
-        // Open a web socket if we don't already have one
-        if(!node.connection){
-          client.connect(node.server.wsUrl, null, originPath, headers, requestOptions);
-        }
 
-        // Parse the payload and send it
-        let payload;
-        if (msg.hasOwnProperty('payload')) {
-          if (!Buffer.isBuffer(msg.payload)) { // if it's not a buffer make sure it's a string.
-            payload = RED.util.ensureString(msg.payload);
-          } else {
-            payload = msg.payload;
+        // Clear any existing timeouts and start a new one
+        clearTimeout(node.timeoutFunction);
+        node.timeoutFunction = setTimeout(() => {
+          node.connection.close();
+          delete node.connection;
+        }, node.socketTimeout * SECONDS_CONVERT_TO_MS);
+
+        ensureConnection(node, client).then(() => {
+          // Parse the payload and send it
+          let payload;
+          if (msg.hasOwnProperty('payload')) {
+            if (!Buffer.isBuffer(msg.payload)) { // if it's not a buffer make sure it's a string.
+              payload = RED.util.ensureString(msg.payload);
+            } else {
+              payload = msg.payload;
+            }
           }
-        }
-        if (payload) {
-          try {
-            node.connection.sendUTF(payload);
-          } catch(err){
-            node.error(err);
+          if (payload) {
+            try {
+              node.connection.sendUTF(payload);
+            } catch(err){
+              node.error(err);
+            }
           }
-        }
-      });
-
-      client.on('connect', connection => {
-        node.connection = connection;
-        node.emit('connected', '');
-
-        // Handle connection errors
-        node.connection.on('error', error => {
-          node.emit('websocketError', '');
         });
-
-        // Handle data responses.
-        // These should look something like { type: 'utf8', utf8Data: '{'statusCode':202,'messageId':'1'}' }
-        node.connection.on('message', data => {
-          let statusCode;
-          try {
-            statusCode = JSON.parse(data.utf8Data).statusCode;
-          } catch (err) {
-            node.emit('invalidStatusCode', '');
-          }
-          if(statusCode < 200 || statusCode >= 300){
-            node.emit('ingestError', statusCode);
-          } else {
-            node.emit('ingestSuccess', statusCode);
-          };
-        });
-
       });
 
     }).catch((err) => {
