@@ -181,19 +181,43 @@ module.exports = function(RED){
 
     node.server = RED.nodes.getNode(config.server);
 
-    // Indicator for Auth Events
+    // Indicator for Events
     if(node.server){
-      node.server.on('authenticated', function() {
+      node.server.on('authenticated', () =>  {
         node.log("[Predix Timeseries]: authenticated");
         node.status({fill:"green",shape:"dot",text:"Authenticated"});
       });
-      node.server.on('unauthenticated',function() {
+      node.server.on('unauthenticated', () =>  {
         node.log("[Predix Timeseries]: unauthenticated");
         node.status({fill:"red",shape:"ring",text:"Unauthenticated"});
       });
-      node.server.on('accessTokenError',function() {
+      node.server.on('accessTokenError', () =>  {
         node.error("[Predix Timeseries]: access token error");
         node.status({fill:"red",shape:"ring",text:"Access Error"});
+      });
+      node.server.on('connected', () =>  {
+        node.log("[Predix Timeseries]: Websocket Connected");
+        node.status({fill:"green",shape:"dot",text:"Connected"});
+      });
+      node.server.on('websocketError', () =>  {
+        node.error("[Predix Timeseries]: Websocket Connected");
+        node.status({fill:"red",shape:"ring",text:"Websocket Error"});
+      });
+      node.server.on('invalidStatusCode', () =>  {
+        node.error("[Predix Timeseries]: Invalid Ingest Status Code");
+        node.status({fill:"red",shape:"ring",text:"Ingest Error"});
+      });
+      node.server.on('ingestError', (statusCode) =>  {
+        node.status({fill:"red",shape:"ring",text:"Ingest Error"});
+        node.error("[Predix Timeseries]: Ingest Error: " + statusCode);
+      });
+      node.server.on('ingestSuccess', (statusCode) => {
+        node.log("[Predix Timeseries]: Ingest Success: " + statusCode);
+        // Blinkenlights
+        node.status({fill:"green",shape:"ring",text:"Data Sent"});
+        setTimeout(() => {
+          node.status({fill:"green",shape:"dot",text:"Connected"});
+        }, 500);
       });
     } else {
       node.status({fill:"yellow", shape:"dot",text:"Missing config"});
@@ -204,7 +228,7 @@ module.exports = function(RED){
     uaa_util.getToken(node.server.UAAurl, node.server.clientID, node.server.clientSecret).then((token) => {
       node.emit('authenticated','');
 
-      // Proxy check for websocket
+      // Check for proxy and add tunnel if needed.
       let requestOptions = {};
       if(process.env.https_proxy) {
         const proxy = url.parse(process.env.https_proxy);
@@ -225,35 +249,14 @@ module.exports = function(RED){
       };
 
       client.on('connect', connection => {
+        node.server.emit('connected', '');
 
-        node.log("[Predix Timeseries]: Websocket Connected");
-        node.status({fill:"green",shape:"dot",text:"Connected"});
-
+        // Handle connection errors
         connection.on('error', error => {
-          node.error("[Predix Timeseries]: Websocket Connected");
-          node.status({fill:"red",shape:"ring",text:"Websocket Error"});
+          node.server.emit('websocketError', '');
         });
 
-        // Handle responses to sending data.
-        // These should look something like { type: 'utf8', utf8Data: '{"statusCode":202,"messageId":"1"}' }
-        connection.on('message', data => {
-          var statusCode;
-          try {
-            statusCode = JSON.parse(data.utf8Data).statusCode;
-          } catch (err) {
-            node.error("[Predix Timeseries]: Invalid ingest status code: " + statusCode);
-          }
-          if(statusCode < 200 || statusCode >= 300){
-            node.error('[Predix Timeseries] :' + statusCode + ": " + "ingest error");
-          } else {
-            // Everything worked, blinkenlights!
-            node.status({fill:"green",shape:"circle",text:"Data Sent"});
-            // TODO: go back to filled circle
-          };
-        });
-
-
-        // Send data when input to node received
+        // Handle data input
         node.on("input", function(msg){
           var payload;
           if (msg.hasOwnProperty("payload")) {
@@ -271,6 +274,22 @@ module.exports = function(RED){
               node.error(err);
             }
           }
+        });
+
+        // Handle data responses.
+        // These should look something like { type: 'utf8', utf8Data: '{"statusCode":202,"messageId":"1"}' }
+        connection.on('message', data => {
+          var statusCode;
+          try {
+            statusCode = JSON.parse(data.utf8Data).statusCode;
+          } catch (err) {
+            node.server.emit('invalidStatusCode', '');
+          }
+          if(statusCode < 200 || statusCode >= 300){
+            node.server.emit('ingestError', statusCode);
+          } else {
+            node.server.emit('ingestSuccess', statusCode);
+          };
         });
 
       });
