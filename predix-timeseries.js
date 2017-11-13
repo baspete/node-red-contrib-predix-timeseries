@@ -2,14 +2,14 @@
 /**
  * Copyright 2013, 2017 IBM Corp.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -19,17 +19,17 @@
  **/
 
 var request = require('request');
-// var ws = require("ws");
+// var ws = require('ws');
 const uaa_util = require('predix-uaa-client');
 const WebSocketClient = require('websocket').client;
 const url = require('url');
 const SECONDS_CONVERT_TO_MS = 1000;
-const defaultQueryUrlPrefix = "https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/";
-const defaultWsURL = "wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages";
-const originPath = "http://localhost/";
+const defaultQueryUrlPrefix = 'https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/';
+const defaultWsURL = 'wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages';
+const originPath = 'http://localhost/';
 
 module.exports = function(RED){
-  "use strict";
+  'use strict';
 
   // ******************************************************************
   // Config Node
@@ -54,16 +54,15 @@ module.exports = function(RED){
     });
   }
 
-  RED.nodes.registerType("timeseries-client", timeseriesClientNode, {
-    credentials:{
-      clientID:{type:"text"},
-      clientSecret: { type:"text"}
+  RED.nodes.registerType('timeseries-client', timeseriesClientNode, {
+    credentials: {
+      clientID:{type:'text'},
+      clientSecret: { type:'text'}
     }
   });
 
   // Config Node
   // ******************************************************************
-
 
   // ******************************************************************
   // Query Node
@@ -74,98 +73,108 @@ module.exports = function(RED){
     var requestMethod ='';
     node.queryType = config.queryType;
 
-    this.server = RED.nodes.getNode(config.server);
+    node.server = RED.nodes.getNode(config.server);
 
     // Indicator
-    if(this.server){
-      node.on('authenticated', function() {
-        node.unauthorized = false;
-        node.status({fill:"green",shape:"dot",text:"Authenticated"});
+    if(node.server){
+      node.on('authenticated', () => {
+        node.status({fill:'green',shape:'dot',text:'Authenticated'});
       });
-      node.on('unauthenticated',function() {
-        node.unauthorized = true;
-        node.status({fill:"red",shape:"ring",text:"Unauthenticated"});
+      node.on('unauthenticated', () => {
+        node.status({fill:'red',shape:'ring',text:'Unauthenticated'});
       });
-      node.on('requestError',function() {
-        node.unauthorized = true;
-        node.status({fill:"red",shape:"ring",text:"Request Error"});
+      node.on('badPayload', (payload) => {
+        node.error('Bad Payload: ' + payload);
+        node.status({fill:'red',shape:'ring',text:'Bad Payload'});
       });
-      node.on('responseError',function() {
-        node.unauthorized = true;
-        node.status({fill:"red",shape:"ring",text:"Response Error"});
+      node.on('requestError', (error) => {
+        node.error('Request Error: ' + error);
+        node.status({fill:'red',shape:'ring',text:'Request Error'});
+      });
+      node.on('requestSuccess', (response) => {
+        node.log('Request Success: ' + response.statusCode);
+        // Blinkenlights
+        node.status({fill:'green',shape:'ring',text:'Data Retrieved'});
+        setTimeout(() => { node.status({fill:'green',shape:'dot',text:'Authenticated'}) }, 200);
+      });
+      node.on('responseError', (response) => {
+        node.error('Response Error: ' + response.statusCode + ': ' + response.body);
+        node.status({fill:'red',shape:'ring',text:'Response Error'});
       });
     } else {
-      node.status({fill:"yellow", shape:"dot",text:"Missing server config"});
+      node.status({fill:'yellow', shape:'dot',text:'Missing server config'});
     }
 
     // Method/Routes for query Types
     switch(node.queryType){
-      case "aggregations":
-        node.apiEndpoint = node.server.queryUrlPrefix + "aggregations";
+      case 'aggregations':
+        node.apiEndpoint = node.server.queryUrlPrefix + 'aggregations';
         requestMethod = 'GET';
         break;
-      case "datapoints":
-        node.apiEndpoint = node.server.queryUrlPrefix + "datapoints";
+      case 'datapoints':
+        node.apiEndpoint = node.server.queryUrlPrefix + 'datapoints';
         requestMethod = 'POST';
         break;
-      case "currentDatapoints":
-        node.apiEndpoint = node.server.queryUrlPrefix + "datapoints/latest";
+      case 'currentDatapoints':
+        node.apiEndpoint = node.server.queryUrlPrefix + 'datapoints/latest';
         requestMethod = 'POST';
         break;
-      case "tags":
-        node.apiEndpoint = node.server.queryUrlPrefix + "tags";
+      case 'tags':
+        node.apiEndpoint = node.server.queryUrlPrefix + 'tags';
         requestMethod = 'GET';
         break;
       default:
         node.apiEndpoint = node.server.queryUrlPrefix;
     };
 
-    function requestCall(msg){
-      if (msg.hasOwnProperty("payload")){
-        var body;
-        try {
-          body = JSON.stringify(msg.payload)
-        } catch (err) {
-          node.error("Failed to parse msg.payload: " + err);
-          return;
-        }
-        // Call with client credentials (UAAUrl, ClientID, ClientSecret), will fetch a client token using these credentials.
-        // uaa_util will cache token for these credentials and retrieve a refresh token if needed.
-        uaa_util.getToken(node.server.UAAurl, node.server.clientID, node.server.clientSecret).then((token) => {
-          node.emit('authenticated','');
-          request({
-              url: node.apiEndpoint,
-              headers:{
-                'predix-zone-id':node.server.predixZoneId,
-                'authorization':'Bearer '+token.access_token
-              },
-              method:requestMethod,
-              body:body
-            }, function(error, response, body){
-            if(error){
-              node.error(error);
-              node.emit('requestError','');
-            } else if(response) {
-              if (response.statusCode!==200){
-                node.emit('responseError','');
-                node.error(response.statusCode+": "+response.body);
-              } else {
-                node.send({payload:response.body});
-              }
-            }
-          });
-        }).catch((err) => {
-          node.emit('unauthenticated','');
-          node.error(err);
-        });
-      }
-    };
+    // uaa_util will cache token for these credentials and retrieve a refresh token if needed.
+    uaa_util.getToken(node.server.UAAurl, node.server.clientID, node.server.clientSecret).then((token) => {
+      node.emit('authenticated','');
 
-    this.on('input', function(msg){
-      requestCall(msg);
+      // Input message handler
+      node.on('input', function(msg){
+        let body;
+        // Validate iput
+        if (msg.hasOwnProperty('payload')){
+          try {
+            body = JSON.stringify(msg.payload)
+          } catch (err) {
+            node.emit('badPayload', err, msg.payload);
+            return;
+          }
+        }
+
+        // Send the request
+        request({
+            url: node.apiEndpoint,
+            headers:{
+              'predix-zone-id':node.server.predixZoneId,
+              'authorization':'Bearer '+token.access_token
+            },
+            method:requestMethod,
+            body:body
+          }, function(error, response, body){
+          if(error){
+            node.emit('requestError', error);
+          } else if(response) {
+            if (response.statusCode < 200 || response.statusCode >= 300){
+              node.emit('responseError', response);
+            } else {
+              node.emit('requestSuccess', response);
+              // Everything worked. Send the response to the output port.
+              node.send({payload:response.body});
+            }
+          }
+        });
+
+      });
+    }).catch((err) => {
+      node.emit('unauthenticated','');
+      node.error(err);
     });
+
   }
-  RED.nodes.registerType("timeseries-query", timeseriesQueryNode);
+  RED.nodes.registerType('timeseries-query', timeseriesQueryNode);
 
   // Query Node
   // ******************************************************************
@@ -183,44 +192,42 @@ module.exports = function(RED){
 
     // Indicator for Events
     if(node.server){
-      node.server.on('authenticated', () =>  {
-        node.log("[Predix Timeseries]: authenticated");
-        node.status({fill:"green",shape:"dot",text:"Authenticated"});
+      node.on('authenticated', () =>  {
+        node.log('authenticated');
+        node.status({fill:'green',shape:'dot',text:'Authenticated'});
       });
-      node.server.on('unauthenticated', () =>  {
-        node.log("[Predix Timeseries]: unauthenticated");
-        node.status({fill:"red",shape:"ring",text:"Unauthenticated"});
+      node.on('unauthenticated', () =>  {
+        node.log('unauthenticated');
+        node.status({fill:'red',shape:'ring',text:'Unauthenticated'});
       });
-      node.server.on('accessTokenError', () =>  {
-        node.error("[Predix Timeseries]: access token error");
-        node.status({fill:"red",shape:"ring",text:"Access Error"});
+      node.on('accessTokenError', () =>  {
+        node.error('access token error');
+        node.status({fill:'red',shape:'ring',text:'Access Error'});
       });
-      node.server.on('connected', () =>  {
-        node.log("[Predix Timeseries]: Websocket Connected");
-        node.status({fill:"green",shape:"dot",text:"Connected"});
+      node.on('connected', () =>  {
+        node.log('Websocket Connected');
+        node.status({fill:'green',shape:'dot',text:'Connected'});
       });
-      node.server.on('websocketError', () =>  {
-        node.error("[Predix Timeseries]: Websocket Connected");
-        node.status({fill:"red",shape:"ring",text:"Websocket Error"});
+      node.on('websocketError', () =>  {
+        node.error('Websocket Connected');
+        node.status({fill:'red',shape:'ring',text:'Websocket Error'});
       });
-      node.server.on('invalidStatusCode', () =>  {
-        node.error("[Predix Timeseries]: Invalid Ingest Status Code");
-        node.status({fill:"red",shape:"ring",text:"Ingest Error"});
+      node.on('invalidStatusCode', () =>  {
+        node.error('Invalid Ingest Status Code');
+        node.status({fill:'red',shape:'ring',text:'Ingest Error'});
       });
-      node.server.on('ingestError', (statusCode) =>  {
-        node.status({fill:"red",shape:"ring",text:"Ingest Error"});
-        node.error("[Predix Timeseries]: Ingest Error: " + statusCode);
+      node.on('ingestError', (statusCode) =>  {
+        node.status({fill:'red',shape:'ring',text:'Ingest Error'});
+        node.error('Ingest Error: ' + statusCode);
       });
-      node.server.on('ingestSuccess', (statusCode) => {
-        node.log("[Predix Timeseries]: Ingest Success: " + statusCode);
+      node.on('ingestSuccess', (statusCode) => {
+        node.log('Ingest Success: ' + statusCode);
         // Blinkenlights
-        node.status({fill:"green",shape:"ring",text:"Data Sent"});
-        setTimeout(() => {
-          node.status({fill:"green",shape:"dot",text:"Connected"});
-        }, 500);
+        node.status({fill:'green',shape:'ring',text:'Data Sent'});
+        setTimeout(() => { node.status({fill:'green',shape:'dot',text:'Connected'}) }, 200);
       });
     } else {
-      node.status({fill:"yellow", shape:"dot",text:"Missing config"});
+      node.status({fill:'yellow', shape:'dot',text:'Missing config'});
     }
 
 
@@ -238,7 +245,7 @@ module.exports = function(RED){
             port: proxy.port
           }
         });
-        node.log("[Predix Timeseries]: Using Proxy "+ proxy.host);
+        node.log('Using Proxy '+ proxy.host);
         requestOptions.agent = tunnelingAgent;
       }
 
@@ -248,54 +255,57 @@ module.exports = function(RED){
         'Origin':originPath
       };
 
+      // Handle data input
+      node.on('input', function(msg){
+        // Open a web socket if we don't already have one
+        if(!node.connection){
+          client.connect(node.server.wsUrl, null, originPath, headers, requestOptions);
+        }
+
+        // Parse the payload and send it
+        let payload;
+        if (msg.hasOwnProperty('payload')) {
+          if (!Buffer.isBuffer(msg.payload)) { // if it's not a buffer make sure it's a string.
+            payload = RED.util.ensureString(msg.payload);
+          } else {
+            payload = msg.payload;
+          }
+        }
+        if (payload) {
+          try {
+            node.connection.sendUTF(payload);
+          } catch(err){
+            node.error(err);
+          }
+        }
+      });
+
       client.on('connect', connection => {
-        node.server.emit('connected', '');
+        node.connection = connection;
+        node.emit('connected', '');
 
         // Handle connection errors
-        connection.on('error', error => {
-          node.server.emit('websocketError', '');
-        });
-
-        // Handle data input
-        node.on("input", function(msg){
-          var payload;
-          if (msg.hasOwnProperty("payload")) {
-            if (!Buffer.isBuffer(msg.payload)) { // if it's not a buffer make sure it's a string.
-              payload = RED.util.ensureString(msg.payload);
-            } else {
-              payload = msg.payload;
-            }
-          }
-          if (payload) {
-            try {
-              connection.sendUTF(payload);
-              node.log("[Predix Timeseries]: Sent " + JSON.stringify(payload));
-            } catch(err){
-              node.error(err);
-            }
-          }
+        node.connection.on('error', error => {
+          node.emit('websocketError', '');
         });
 
         // Handle data responses.
-        // These should look something like { type: 'utf8', utf8Data: '{"statusCode":202,"messageId":"1"}' }
-        connection.on('message', data => {
-          var statusCode;
+        // These should look something like { type: 'utf8', utf8Data: '{'statusCode':202,'messageId':'1'}' }
+        node.connection.on('message', data => {
+          let statusCode;
           try {
             statusCode = JSON.parse(data.utf8Data).statusCode;
           } catch (err) {
-            node.server.emit('invalidStatusCode', '');
+            node.emit('invalidStatusCode', '');
           }
           if(statusCode < 200 || statusCode >= 300){
-            node.server.emit('ingestError', statusCode);
+            node.emit('ingestError', statusCode);
           } else {
-            node.server.emit('ingestSuccess', statusCode);
+            node.emit('ingestSuccess', statusCode);
           };
         });
 
       });
-
-      // Open the web socket
-      client.connect(node.server.wsUrl, null, originPath, headers, requestOptions);
 
     }).catch((err) => {
       node.emit('unauthenticated','');
@@ -303,7 +313,7 @@ module.exports = function(RED){
     });
 
   }
-  RED.nodes.registerType("timeseries-ingest", timeseriesIngestNode);
+  RED.nodes.registerType('timeseries-ingest', timeseriesIngestNode);
 
   // Ingest
   // ******************************************************************
