@@ -184,7 +184,7 @@ module.exports = function(RED){
   function timeseriesIngestNode(config){
     RED.nodes.createNode(this,config);
     let node = this;
-    node.socketTimeout = config.socketTimeout;
+    node.socketTimeout = config.socketTimeout || 60;
     const client = new WebSocketClient();
 
     node.server = RED.nodes.getNode(config.server);
