@@ -54,7 +54,7 @@ module.exports = function(RED){
     });
   }
 
-  RED.nodes.registerType('timeseries-client', timeseriesClientNode, {
+  RED.nodes.registerType('predix-ts-client', timeseriesClientNode, {
     credentials: {
       clientID:{type:'text'},
       clientSecret: { type:'text'}
@@ -173,7 +173,7 @@ module.exports = function(RED){
     });
 
   }
-  RED.nodes.registerType('timeseries-query', timeseriesQueryNode);
+  RED.nodes.registerType('predix-ts-query', timeseriesQueryNode);
 
   // Query Node
   // ******************************************************************
@@ -184,7 +184,7 @@ module.exports = function(RED){
   function timeseriesIngestNode(config){
     RED.nodes.createNode(this,config);
     let node = this;
-    node.socketTimeout = config.socketTimeout || 60;
+    node.socketTimeout = config.socketTimeout;
     const client = new WebSocketClient();
 
     node.server = RED.nodes.getNode(config.server);
@@ -338,7 +338,7 @@ module.exports = function(RED){
     });
 
   }
-  RED.nodes.registerType('timeseries-ingest', timeseriesIngestNode);
+  RED.nodes.registerType('predix-ts-ingest', timeseriesIngestNode);
 
   // Ingest
   // ******************************************************************

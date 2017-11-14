@@ -1,5 +1,5 @@
 <script type="text/javascript">
-  RED.nodes.registerType('timeseries-client',{
+  RED.nodes.registerType('predix-ts-client',{
     category: 'config',
     defaults: {
       name: { value:""},
@@ -24,17 +24,17 @@
 </script>
 
 <script type="text/javascript">
-  RED.nodes.registerType('timeseries-ingest',{
+  RED.nodes.registerType('predix-ts-ingest',{
     category: 'storage',
-    color: '#a8ddf4',
+    color: '#ebf7fb',
     defaults: {
       name: { value:""},
-      server:{type:"timeseries-client", required:true},
-      socketTimeout:{ value: "60", required:true}
+      server:{type:"predix-ts-client", required:true},
+      socketTimeout:{value:"60", required:true}
     },
-    icon: "predix-timeseries.png",
+    icon: "logo.png",
     align: "right",
-    paletteLabel:"predix ts",
+    paletteLabel:"Predix TS",
     inputs:1,
     outputs:0,
     label: function() {
@@ -44,17 +44,17 @@
 </script>
 
 <script type="text/javascript">
-  RED.nodes.registerType('timeseries-query',{
+  RED.nodes.registerType('predix-ts-query',{
     category: 'storage',
-    color: '#a8ddf4',
+    color: '#ebf7fb',
     defaults: {
       name: { value:""},
-      server:{type:"timeseries-client", required:true},
+      server:{type:"predix-ts-client", required:true},
       queryType:{value:"",required:true}
     },
-    icon: "predix-timeseries.png",
+    icon: "logo.png",
     align: "left",
-    paletteLabel:"predix ts",
+    paletteLabel:"Predix TS",
     inputs:1,
     outputs:1,
     label: function() {
@@ -63,7 +63,7 @@
   });
 </script>
 
-<script type="text/x-red" data-template-name="timeseries-client">
+<script type="text/x-red" data-template-name="predix-ts-client">
   <div class="form-row">
     <label for="node-config-input-name"><i class="icon-tag"></i> Name</label>
     <input type="text" id="node-config-input-name" placeholder="Name">
@@ -94,7 +94,7 @@
   </div>
 </script>
 
-<script type="text/x-red" data-template-name="timeseries-ingest">
+<script type="text/x-red" data-template-name="predix-ts-ingest">
   <div class="form-row">
     <label for="node-input-name"><i class="icon-tag"></i>Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
@@ -113,7 +113,7 @@
   </div>
 </script>
 
-<script type="text/x-red" data-template-name="timeseries-query">
+<script type="text/x-red" data-template-name="predix-ts-query">
   <div class="form-row">
     <label for="node-input-name"><i class="icon-tag"></i>Name</label>
     <input type="text" id="node-input-name" placeholder="Name">
@@ -133,7 +133,7 @@
   </div>
 </script>
 
-<script type="text/x-red" data-help-name="timeseries-client">
+<script type="text/x-red" data-help-name="predix-ts-client">
   <p>This sets up the timeseries client config.</p>
   <p>
     <ul>
@@ -150,7 +150,7 @@
   </p>
 </script>
 
-<script type="text/x-red" data-help-name="timeseries-ingest">
+<script type="text/x-red" data-help-name="predix-ts-ingest">
   <p>This is the data ingest node that allows your to write data into the Predix Timeseries microservices via websocket.</p>
   <p>The current default websocket endpoint is <code>wss://gateway-predix-data-services.run.aws-usw02-pr.ice.predix.io/v1/stream/messages </code> </p>
   <p>To use the node, first add a new Time series client node to connect with Timeseries on Predix.</p>
@@ -169,7 +169,7 @@
   <p>Note: please refer to the README file for detail structure of the input message.</p>
 </script>
 
-<script type="text/x-red" data-help-name="timeseries-query">
+<script type="text/x-red" data-help-name="predix-ts-query">
   <p>This is the data query node that allows your to query data from the Predix Timeseries microservices.</p>
   <p>The current default API endpoint prefix is <code>https://time-series-store-predix.run.aws-usw02-pr.ice.predix.io/v1/ </code> </p>
   <p>To use the node, first add a new Time series client node to connect with Timeseries on Predix.</p>
