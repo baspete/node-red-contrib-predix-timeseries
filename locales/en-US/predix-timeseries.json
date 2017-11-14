@@ -4,10 +4,13 @@
       "aggregations":"Get all available aggregations",
       "datapoints":"Query datapoints",
       "query-current":"Query for current value",
-      "tags":"Get all tags"
+      "tags":"Get all tags",
+      "10seconds":"10 seconds",
+      "1minute":"1 minute",
+      "5minutes":"5 minutes"
     },
     "error":{
-      "unauthorized":"Unable to authorized with this server"
+      "unauthorized":"Unable to authenticate with this server"
     }
   }
 }
