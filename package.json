@@ -19,7 +19,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/baspete/node-red-contrib-predix-timeseries.git"
+    "url": "git+https://github.com/baspete/node-red-contrib-predix-ts.git"
   },
   "node-red": {
     "nodes": {
