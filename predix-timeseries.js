@@ -205,7 +205,7 @@ module.exports = function(RED){
       });
       node.on('connected', () =>  {
         node.log('Websocket Connected');
-        node.status({fill:'green',shape:'dot',text:'Connected'});
+        node.status({fill:'blue',shape:'dot',text:'Connected'});
       });
       node.on('disconnected', (description) =>  {
         node.log('Websocket Disconnected: ' + description);
@@ -226,8 +226,8 @@ module.exports = function(RED){
       node.on('ingestSuccess', (statusCode) => {
         node.log('Ingest Success: ' + statusCode);
         // Blinkenlights
-        node.status({fill:'green',shape:'ring',text:"Connected"});
-        setTimeout(() => { node.status({fill:'green',shape:'dot',text:"Connected"}) }, 100);
+        node.status({fill:'blue',shape:'ring',text:"Connected"});
+        setTimeout(() => { node.status({fill:'blue',shape:'dot',text:"Connected"}) }, 100);
       });
     } else {
       node.status({fill:'yellow', shape:'dot',text:'Missing config'});
