@@ -10,9 +10,7 @@
     },
     credentials:{
       clientID:{type:"text"},
-      clientSecret: { type:"password"},
-      userID:{type:"text"},
-      userSecret:{type:"password"}
+      clientSecret: { type:"password"}
     },
     inputs:0,
     outputs:0,
@@ -25,7 +23,7 @@
 
 <script type="text/javascript">
   RED.nodes.registerType('predix-ts-ingest',{
-    category: 'storage',
+    category: 'predix',
     color: '#ebf7fb',
     defaults: {
       name: { value:""},
@@ -45,7 +43,7 @@
 
 <script type="text/javascript">
   RED.nodes.registerType('predix-ts-query',{
-    category: 'storage',
+    category: 'predix',
     color: '#ebf7fb',
     defaults: {
       name: { value:""},

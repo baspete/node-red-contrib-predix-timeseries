@@ -151,7 +151,7 @@ module.exports = function(RED){
               'authorization':'Bearer '+token.access_token
             },
             method:requestMethod,
-            body:body
+            body:body // TODO: I think this is going to break for a proper JSON payload
           }, function(error, response, body){
           if(error){
             node.emit('requestError', error);
