@@ -4,7 +4,16 @@ These are [Node-RED](http://nodered.org) nodes that interface with the Timeserie
 
 ## Pre-requesites
 
-To run these nodes, you need to have a running Predix Timeseries service on the GE's Predix platform. Please refer to [predix-timeseries-setup-guide](https://github.com/SenseTecnic/node-red-contrib-predix-timeseries/blob/master/predix-timeseries-setup.md).
+To run these nodes, you need to have a running Predix Timeseries service and UAA service on the GE's Predix platform. Please refer to the Predix Developer Network [documentation](https://docs.predix.io/en-US/content/service/data_management/time_series/) for details on creating these services.
+
+TL;DR: You'll need to set up a Predix Timeseries instance, and a UAA client with grant type `client_credentials` and `timeseries.zones.<your timeseries zone id>.ingest`, `timeseries.zones.<your timeseries zone id>.query` and `timeseries.zones.<your timeseries zone id>.user` scopes. Once you have that, you'll need to enter values in your config node for:
+
+  * The timeseries URL for queries (this will be https://something-or-other)
+  * The timeseries URL for ingest (this will be wss://something-or-other)
+  * The UAA url
+  * The UAA client ID
+  * The UAA client secret
+  * Your timeseries zone ID
 
 ## Install
 
